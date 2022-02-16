@@ -1,6 +1,6 @@
 import React, {useContext} from 'react';
-import {CssBaseline, ThemeProvider} from '@mui/material';
 import {HashRouter, Route, Routes} from 'react-router-dom';
+import {CssBaseline, ThemeProvider} from '@mui/material';
 import theme from './theme';
 import './App.css';
 import Login from './pages/login/Login';
