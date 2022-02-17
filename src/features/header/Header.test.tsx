@@ -1,9 +1,14 @@
 import React from 'react';
 import {render, screen} from '@testing-library/react';
 import Header from './Header';
+import {MemoryRouter} from 'react-router-dom';
 
 test('renders header components', () => {
-  render(<Header />);
+  render(
+    <MemoryRouter>
+      <Header />
+    </MemoryRouter>
+  );
   const titleElement = screen.getByText(/GroupUp/i);
   expect(titleElement).toBeInTheDocument();
   const linkElement1 = screen.getByText(/Min side/i);
