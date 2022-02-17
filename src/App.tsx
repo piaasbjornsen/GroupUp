@@ -9,6 +9,7 @@ import Header from './features/header/Header';
 import MyGroups from './pages/mygroups/MyGroups';
 import './App.css';
 import AdminPage from './pages/admin/AdminPage';
+import CreateGroup from './pages/creategroup/CreateGroup';
 
 function App() {
   const user = useContext(AuthContext);
@@ -24,6 +25,7 @@ function App() {
             <Routes>
               <Route path="/" element={<MyGroups />}></Route>
               <Route path="/admin" element={<AdminPage />}></Route>
+              <Route path="/creategroup" element={<CreateGroup />}></Route>
             </Routes>
           </>
         )}
