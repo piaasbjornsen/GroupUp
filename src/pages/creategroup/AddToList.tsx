@@ -1,27 +1,43 @@
 import {Grid, Button} from '@mui/material';
 import TextField from '@mui/material/TextField';
 import Autocomplete from '@mui/material/Autocomplete';
-import React, {useState} from 'react';
-import {IState as Props} from './CreateGroup';
+import React, {SyntheticEvent, useEffect, useState} from 'react';
+import {groups as firebaseGroups} from '../../service/firebase';
+import {interests as firebaseInterests} from '../../service/firebase';
+import {users as firebaseUsers} from '../../service/firebase';
+import {
+  IGroup,
+  IGroupInterest,
+  IGroupMember,
+  Users,
+} from '../../interfaces/groups';
 
 interface IProps {
-  groups: Props['groups'];
-  setGroups: React.Dispatch<React.SetStateAction<Props['groups']>>;
-}
-
-interface IGroup {
-  group: {
-    navn: String;
-    beskrivelse?: String;
-    interesser?: String[];
-    medlemmer?: String[];
-  };
+  groups: IGroup[];
+  setGroups: React.Dispatch<React.SetStateAction<IGroup[]>>;
 }
 
 const AddToList: React.FC<IProps> = ({groups, setGroups}) => {
-  const [input, setInput] = useState<IGroup['group']>({navn: ''});
+  const [input, setInput] = useState<IGroup>({name: ''});
+  const [interests, setInterests] = useState<IGroupInterest[]>([]);
+  const [users, setUsers] = useState<String[]>([]);
 
   const [state, setState] = useState({reset: false});
+
+  useEffect(() => {
+    firebaseUsers.once('value', snapshot => {
+      const users: Users = snapshot.val();
+      console.log(users);
+      const userArray = Object.values(users).map((user: IGroupMember) => {
+        return user['name'];
+      });
+      setUsers(userArray);
+      firebaseInterests.once('value', snapshot => {
+        const interests = snapshot.val();
+        setInterests(interests);
+      });
+    });
+  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
@@ -33,22 +49,24 @@ const AddToList: React.FC<IProps> = ({groups, setGroups}) => {
   };
 
   const handleClick = (): void => {
-    if (!input.navn) {
+    if (input.name === '') {
       return;
     }
 
-    setGroups([
-      ...groups,
-      {
-        gruppenavn: input.navn,
-        beskrivelse: input.beskrivelse,
-        medlemmer: input.medlemmer,
-        interesser: input.interesser,
-      },
-    ]);
+    const newGroup: IGroup = {
+      name: input.name,
+      description: input.description,
+      members: input.members,
+      interests: input.interests,
+    };
+
+    firebaseGroups.push(newGroup);
+
+    setGroups([...groups, newGroup]);
+
     setInput({
-      navn: '',
-      beskrivelse: '',
+      name: '',
+      description: '',
     });
 
     setState({
@@ -58,19 +76,6 @@ const AddToList: React.FC<IProps> = ({groups, setGroups}) => {
 
   const reseter = state.reset ? '1' : '2';
 
-  const users = [
-    {name: 'Jonatan'},
-    {name: 'Ellie'},
-    {name: 'Ole'},
-    {name: 'Pål'},
-  ];
-  const interests = [
-    {name: 'Fjellklatring'},
-    {name: 'Sport'},
-    {name: 'Spillkveld'},
-    {name: 'Vinkveld'},
-  ];
-
   return (
     <>
       <Grid container justifyContent="center" marginTop={5}>
@@ -78,23 +83,23 @@ const AddToList: React.FC<IProps> = ({groups, setGroups}) => {
           style={{width: 500}}
           required
           id="outlined-required"
-          label="Gruppenavn"
+          label="Group name"
           onChange={handleChange}
-          value={input.navn}
-          name="navn"
+          value={input.name}
+          name="name"
         />
       </Grid>
       <Grid container justifyContent="center" marginTop={5}>
         <TextField
           style={{width: 500}}
           id="outlined-multiline-static"
-          label="Gruppebeskrivelse"
+          label="Description"
           multiline
           rows={4}
           inputProps={{maxLength: 240}}
           onChange={handleChange}
-          value={input.beskrivelse}
-          name="beskrivelse"
+          value={input.description}
+          name="description"
         />
       </Grid>
       <Grid container justifyContent="center" marginTop={5}>
@@ -104,14 +109,16 @@ const AddToList: React.FC<IProps> = ({groups, setGroups}) => {
           multiple
           freeSolo
           style={{width: 500}}
-          onChange={(event: React.SyntheticEvent, value: String[]) => {
-            console.log(value);
+          onChange={(
+            event: SyntheticEvent<Element, Event>,
+            value: (string | String)[]
+          ) => {
             setInput({
               ...input,
-              medlemmer: value,
+              members: value,
             });
           }}
-          options={users.map(option => option.name)}
+          options={users}
           renderInput={params => (
             <TextField {...params} label="Legg til brukere" />
           )}
@@ -127,10 +134,10 @@ const AddToList: React.FC<IProps> = ({groups, setGroups}) => {
           onChange={(event: React.SyntheticEvent, value: string[]) => {
             setInput({
               ...input,
-              interesser: value,
+              interests: value,
             });
           }}
-          options={interests.map(option => option.name)}
+          options={interests}
           renderInput={params => (
             <TextField {...params} label="Legg til interesser" />
           )}
