@@ -8,6 +8,7 @@ import {AuthContext} from './context/AuthContext';
 import Header from './features/header/Header';
 import MyGroups from './pages/mygroups/MyGroups';
 import './App.css';
+import AdminPage from './pages/admin/AdminPage';
 
 function App() {
   const user = useContext(AuthContext);
@@ -21,7 +22,8 @@ function App() {
           <>
             <Header />
             <Routes>
-              <Route path="/mygroups" element={<MyGroups />}></Route>
+              <Route path="/" element={<MyGroups />}></Route>
+              <Route path="/admin" element={<AdminPage />}></Route>
             </Routes>
           </>
         )}
