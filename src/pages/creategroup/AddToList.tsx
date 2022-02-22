@@ -83,7 +83,7 @@ const AddToList: React.FC<IProps> = ({groups, setGroups}) => {
           style={{width: 500}}
           required
           id="outlined-required"
-          label="Group name"
+          label="Gruppenavn"
           onChange={handleChange}
           value={input.name}
           name="name"
@@ -93,7 +93,7 @@ const AddToList: React.FC<IProps> = ({groups, setGroups}) => {
         <TextField
           style={{width: 500}}
           id="outlined-multiline-static"
-          label="Description"
+          label="Beskrivelse"
           multiline
           rows={4}
           inputProps={{maxLength: 240}}
