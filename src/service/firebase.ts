@@ -1,4 +1,5 @@
 import firebase from 'firebase/app';
+import 'firebase/database';
 import 'firebase/auth';
 import 'firebase/firestore';
 
@@ -15,13 +16,18 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 firebase.firestore();
 
+//signing in and out
 export const auth = firebase.auth();
-
 const provider = new firebase.auth.GoogleAuthProvider();
 provider.setCustomParameters({prompt: 'select_account'});
-
 export const signInWithGoogle = () => auth.signInWithPopup(provider);
-
 export const signOut = () => auth.signOut();
+
+//database
+const database = firebase.database().ref();
+const groups = database.child('groups');
+const users = database.child('users');
+const interests = database.child('interests');
+export {groups, users, interests};
 
 export default firebase;

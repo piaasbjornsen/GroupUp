@@ -19,8 +19,16 @@ Språk: engelsk
 
 Alle commit-meldinger skal følge vår tilpassede standard basert på [conventionalcommits.org v1.0.0](https://www.conventionalcommits.org/en/v1.0.0/).
 
+I tillegg er en nødt til å legge til hvem en har parprogrammert med med Co-Authored-By:, etter en tom linje.
+
 **Standard-melding**  
-Strukurene vi bruker baserer seg på &lt;type>(optional scope)/#&lt;issue>: &lt;description>
+Strukurene vi bruker baserer seg på
+
+```
+<type>(optional scope)/#<issue>: <description>
+
+Co-Authored-By: name <email>
+```
 
 &lt;type>: feat (ny / endret funksjonalitet)/chore (endringer som ikke fører til direkte synlige resultater til en brukerhistorie)/fix (rettelse av en feil)
 
