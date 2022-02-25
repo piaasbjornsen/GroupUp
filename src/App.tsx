@@ -10,6 +10,7 @@ import MyGroups from './pages/mygroups/MyGroups';
 import './App.css';
 import AdminPage from './pages/admin/AdminPage';
 import CreateGroup from './pages/creategroup/CreateGroup';
+import GroupTable from './pages/findgroups/GroupTable';
 
 function App() {
   const user = useContext(AuthContext);
@@ -26,6 +27,7 @@ function App() {
               <Route path="/" element={<MyGroups />}></Route>
               <Route path="/admin" element={<AdminPage />}></Route>
               <Route path="/creategroup" element={<CreateGroup />}></Route>
+              <Route path="/findgroups" element={<GroupTable />}></Route>
             </Routes>
           </>
         )}

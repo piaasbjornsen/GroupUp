@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, {useContext} from 'react';
 import {alpha} from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Table from '@mui/material/Table';
@@ -23,11 +23,14 @@ import ClearIcon from '@mui/icons-material/Clear';
 import {groups as firebaseGroups} from '../../service/firebase';
 import {IGroup} from '../../interfaces/groups';
 import {useEffect, useState} from 'react';
+import {AuthContext} from '../../context/AuthContext';
+import {IUser} from '../../interfaces/users';
 
 interface Data {
   groupName: string;
   members: number;
   interests: string;
+  description: string;
 }
 
 function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
@@ -92,6 +95,12 @@ const headCells: readonly HeadCell[] = [
     label: 'Antall medlemmer',
   },
   {
+    id: 'description',
+    numeric: false,
+    disablePadding: false,
+    label: 'Beskrivelse',
+  },
+  {
     id: 'interests',
     numeric: false,
     disablePadding: false,
@@ -112,14 +121,7 @@ interface EnhancedTableProps {
 }
 
 function EnhancedTableHead(props: EnhancedTableProps) {
-  const {
-    onSelectAllClick,
-    order,
-    orderBy,
-    numSelected,
-    rowCount,
-    onRequestSort,
-  } = props;
+  const {order, orderBy, onRequestSort} = props;
   const createSortHandler =
     (property: keyof Data) => (event: React.MouseEvent<unknown>) => {
       onRequestSort(event, property);
@@ -165,6 +167,10 @@ const EnhancedTableToolbar = (props: EnhancedTableToolbarProps) => {
   const numSelected = props.numSelected;
   const selected = props.selected;
   const setSelected = props.setSelected;
+  const handleClick = () => {
+    console.log(selected);
+    setSelected([]);
+  };
 
   return (
     <Toolbar
@@ -211,10 +217,7 @@ const EnhancedTableToolbar = (props: EnhancedTableToolbarProps) => {
               <ClearIcon />
             </IconButton>
           </Tooltip>
-          <Tooltip
-            title="Send medlemsforespørsel"
-            onClick={() => console.log(selected)}
-          >
+          <Tooltip title="Send møteforespørsel" onClick={handleClick}>
             <IconButton>
               <GroupAddIcon />
             </IconButton>
@@ -236,22 +239,31 @@ export default function EnhancedTable() {
   const [orderBy, setOrderBy] = React.useState<keyof Data>('members');
   const [selected, setSelected] = React.useState<readonly string[]>([]);
   const [page, setPage] = React.useState(0);
-  const [dense, setDense] = React.useState(false);
+  const [dense] = React.useState(false);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
 
   const [rows, setRows] = useState<Data[]>([]);
 
   useEffect(() => {
+    //HER TROR JEG PROBLEMET LIGGER:
+    //Dersom du løser problemet er det bare å erstatte 'Testverdi' med user.uid
+    // const user = useContext(AuthContext);
     firebaseGroups.once('value', snapshot => {
       const groups: IGroup = snapshot.val();
       console.log(groups);
-      const groupArray = Object.values(groups).map((group: IGroup) => {
-        return {
-          groupName: group['name'],
-          members: group['members'] ? group['members'].length : 0,
-          interests: group['interests'] ? group['interests'].join(', ') : '',
-        };
-      });
+      const containsUser = (group: IGroup, userID: string | undefined) => {
+        return group.members?.includes(userID ? userID : '');
+      };
+      const groupArray = Object.values(groups)
+        .filter((group: IGroup) => !containsUser(group, 'Testverdi'))
+        .map((group: IGroup) => {
+          return {
+            groupName: group['name'],
+            members: group['members'] ? group['members'].length : 0,
+            interests: group['interests'] ? group['interests'].join(', ') : '',
+            description: group['description'] ? group['description'] : '',
+          };
+        });
       setRows(groupArray);
     });
   }, []);
@@ -274,12 +286,7 @@ export default function EnhancedTable() {
     setSelected([]);
   };
 
-  const handleClick = (
-    event: React.MouseEvent<unknown>,
-    name: string,
-    row: Data
-  ) => {
-    //console.log(row)
+  const handleClick = (event: React.MouseEvent<unknown>, name: string) => {
     const selectedIndex = selected.indexOf(name);
     let newSelected: readonly string[] = [];
 
@@ -317,7 +324,7 @@ export default function EnhancedTable() {
     page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
 
   return (
-    <Grid container justifyContent="center" marginTop={20}>
+    <Grid container justifyContent="center" marginTop={10}>
       <Box sx={{width: '80%'}}>
         <Paper sx={{width: '100%', mb: 2}}>
           <EnhancedTableToolbar
@@ -351,9 +358,7 @@ export default function EnhancedTable() {
                     return (
                       <TableRow
                         hover
-                        onClick={event =>
-                          handleClick(event, row.groupName, row)
-                        }
+                        onClick={event => handleClick(event, row.groupName)}
                         role="checkbox"
                         aria-checked={isItemSelected}
                         tabIndex={-1}
@@ -381,6 +386,9 @@ export default function EnhancedTable() {
                         </TableCell>
                         <TableCell size="small" align="right">
                           {row.members}
+                        </TableCell>
+                        <TableCell size="small" align="left">
+                          {row.description}{' '}
                         </TableCell>
                         <TableCell size="small" align="left">
                           {row.interests}{' '}

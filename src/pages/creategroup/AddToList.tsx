@@ -1,16 +1,12 @@
 import {Grid, Button} from '@mui/material';
 import TextField from '@mui/material/TextField';
 import Autocomplete from '@mui/material/Autocomplete';
-import React, {SyntheticEvent, useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {groups as firebaseGroups} from '../../service/firebase';
 import {interests as firebaseInterests} from '../../service/firebase';
 import {users as firebaseUsers} from '../../service/firebase';
-import {
-  IGroup,
-  IGroupInterest,
-  IGroupMember,
-  Users,
-} from '../../interfaces/groups';
+import {IUser} from '../../interfaces/users';
+import {IGroup, IGroupInterest} from '../../interfaces/groups';
 
 interface IProps {
   groups: IGroup[];
@@ -18,18 +14,22 @@ interface IProps {
 }
 
 const AddToList: React.FC<IProps> = ({groups, setGroups}) => {
-  const [input, setInput] = useState<IGroup>({name: ''});
+  const [input, setInput] = useState<IGroup>({
+    name: '',
+    mathcRequests: [],
+    matches: [],
+  });
   const [interests, setInterests] = useState<IGroupInterest[]>([]);
-  const [users, setUsers] = useState<String[]>([]);
+  const [users, setUsers] = useState<IUser[]>([]);
 
   const [state, setState] = useState({reset: false});
 
   useEffect(() => {
     firebaseUsers.once('value', snapshot => {
-      const users: Users = snapshot.val();
+      const users: IUser[] = snapshot.val();
       console.log(users);
-      const userArray = Object.values(users).map((user: IGroupMember) => {
-        return user['name'];
+      const userArray = Object.values(users).map((user: IUser) => {
+        return user;
       });
       setUsers(userArray);
       firebaseInterests.once('value', snapshot => {
@@ -58,6 +58,8 @@ const AddToList: React.FC<IProps> = ({groups, setGroups}) => {
       description: input.description,
       members: input.members,
       interests: input.interests,
+      mathcRequests: [],
+      matches: [],
     };
 
     firebaseGroups.push(newGroup);
@@ -67,6 +69,8 @@ const AddToList: React.FC<IProps> = ({groups, setGroups}) => {
     setInput({
       name: '',
       description: '',
+      mathcRequests: [],
+      matches: [],
     });
 
     setState({
@@ -110,15 +114,17 @@ const AddToList: React.FC<IProps> = ({groups, setGroups}) => {
           freeSolo
           style={{width: 500}}
           onChange={(
-            event: SyntheticEvent<Element, Event>,
-            value: (string | String)[]
+            event: React.SyntheticEvent,
+            value: (string | IUser)[]
           ) => {
+            console.log(value);
             setInput({
               ...input,
               members: value,
             });
           }}
           options={users}
+          getOptionLabel={option => option.name}
           renderInput={params => (
             <TextField {...params} label="Legg til brukere" />
           )}

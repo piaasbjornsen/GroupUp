@@ -13,5 +13,7 @@ export interface IGroup {
   name: string;
   description?: string;
   interests?: IGroupInterest[];
-  members?: String[];
+  members?: (string | IGroupMember)[];
+  mathcRequests: IGroup[];
+  matches: IGroup[];
 }
