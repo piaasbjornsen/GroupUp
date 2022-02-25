@@ -1,3 +1,5 @@
+import {IUser} from './users';
+
 export type IGroupInterest = string;
 
 export interface Users {
@@ -13,7 +15,9 @@ export interface IGroup {
   name: string;
   description?: string;
   interests?: IGroupInterest[];
-  members?: (string | IGroupMember)[];
+  //PROBLEM
+  //Ønsker egentlig kun IUser[], feilen skyldes problemet i creategroup/AddToList
+  members?: (string | IUser)[];
   mathcRequests: IGroup[];
   matches: IGroup[];
 }

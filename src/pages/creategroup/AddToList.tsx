@@ -115,6 +115,9 @@ const AddToList: React.FC<IProps> = ({groups, setGroups}) => {
           style={{width: 500}}
           onChange={(
             event: React.SyntheticEvent,
+            //PROBLEM
+            //Irriterer meg at den absolutt vil ha med string også. Dette fører til at members
+            //i IGroup også må godta string[] hvilket egentlig er feil....
             value: (string | IUser)[]
           ) => {
             console.log(value);

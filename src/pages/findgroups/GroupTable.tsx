@@ -21,7 +21,7 @@ import {visuallyHidden} from '@mui/utils';
 import {Grid} from '@mui/material';
 import ClearIcon from '@mui/icons-material/Clear';
 import {groups as firebaseGroups} from '../../service/firebase';
-import {IGroup} from '../../interfaces/groups';
+import {IGroup, IGroupMember} from '../../interfaces/groups';
 import {useEffect, useState} from 'react';
 import {AuthContext} from '../../context/AuthContext';
 import {IUser} from '../../interfaces/users';
@@ -243,19 +243,20 @@ export default function EnhancedTable() {
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
 
   const [rows, setRows] = useState<Data[]>([]);
+  const user = useContext(AuthContext);
 
   useEffect(() => {
-    //HER TROR JEG PROBLEMET LIGGER:
-    //Dersom du løser problemet er det bare å erstatte 'Testverdi' med user.uid
-    // const user = useContext(AuthContext);
+    console.log('Her kommer en test');
+    console.log(user);
     firebaseGroups.once('value', snapshot => {
       const groups: IGroup = snapshot.val();
       console.log(groups);
-      const containsUser = (group: IGroup, userID: string | undefined) => {
-        return group.members?.includes(userID ? userID : '');
-      };
+      //PROBLEM
+      //Vet ikke hva User er, har forstått det slik at det er Firebase.User
+      //Problemet med at members er (string | IUser)[] stammer i fra
+      //problemet i creategroup/AddToList
       const groupArray = Object.values(groups)
-        .filter((group: IGroup) => !containsUser(group, 'Testverdi'))
+        .filter((group: IGroup) => !group.members?.includes(user))
         .map((group: IGroup) => {
           return {
             groupName: group['name'],
