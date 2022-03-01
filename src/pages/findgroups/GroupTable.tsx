@@ -1,5 +1,4 @@
 import React, {useContext} from 'react';
-import {alpha} from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -12,20 +11,25 @@ import TableSortLabel from '@mui/material/TableSortLabel';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
-import Checkbox from '@mui/material/Checkbox';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
-import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import {visuallyHidden} from '@mui/utils';
-import {Grid} from '@mui/material';
-import ClearIcon from '@mui/icons-material/Clear';
+import {Grid, TextField} from '@mui/material';
+import Autocomplete from '@mui/material/Autocomplete';
 import {groups as firebaseGroups} from '../../service/firebase';
 import {useEffect, useState} from 'react';
+import {interests as firebaseInterests} from '../../service/firebase';
+import {
+  IFirebaseGroup,
+  IFirebaseGroups,
+  IFirebaseInterest,
+} from '../../interfaces/firebase';
 import {AuthContext} from '../../context/AuthContext';
-import {IFirebaseGroup, IFirebaseGroups} from '../../interfaces/firebase';
+import {useNavigate} from 'react-router-dom';
 
 interface Data {
+  key: string;
   groupName: string;
   members: number;
   interests: string;
@@ -108,12 +112,10 @@ const headCells: readonly HeadCell[] = [
 ];
 
 interface EnhancedTableProps {
-  numSelected: number;
   onRequestSort: (
     event: React.MouseEvent<unknown>,
     property: keyof Data
   ) => void;
-  onSelectAllClick: (event: React.ChangeEvent<HTMLInputElement>) => void;
   order: Order;
   orderBy: string;
   rowCount: number;
@@ -157,78 +159,62 @@ function EnhancedTableHead(props: EnhancedTableProps) {
 }
 
 interface EnhancedTableToolbarProps {
-  numSelected: number;
-  selected: readonly string[];
-  setSelected: React.Dispatch<React.SetStateAction<readonly string[]>>;
+  handleFiltering: (interests: string[]) => void;
 }
 
 const EnhancedTableToolbar = (props: EnhancedTableToolbarProps) => {
-  const numSelected = props.numSelected;
-  const selected = props.selected;
-  const setSelected = props.setSelected;
-  const handleClick = () => {
-    console.log(selected);
-    setSelected([]);
+  const [interests, setInterests] = useState<IFirebaseInterest[]>([]);
+  const [filters, setFilters] = useState<string[]>([]);
+
+  const handleFilter = () => {
+    props.handleFiltering(filters);
   };
+
+  useEffect(() => {
+    firebaseInterests.once('value', snapshot => {
+      const interests = snapshot.val();
+      setInterests(interests);
+    });
+  }, []);
 
   return (
     <Toolbar
       sx={{
         pl: {sm: 2},
         pr: {xs: 1, sm: 1},
-        ...(numSelected > 0 && {
-          bgcolor: theme =>
-            alpha(
-              theme.palette.primary.main,
-              theme.palette.action.activatedOpacity
-            ),
-        }),
       }}
     >
-      {numSelected > 0 ? (
-        <Typography
-          sx={{flex: '1 1 100%'}}
-          color="inherit"
-          variant="subtitle1"
-          component="div"
-        >
-          {numSelected} valgt
-        </Typography>
-      ) : (
-        <Typography
-          sx={{flex: '1 1 100%'}}
-          variant="h6"
-          id="tableTitle"
-          component="div"
-        >
-          Grupper
-        </Typography>
-      )}
-      {numSelected > 0 ? (
-        <>
-          <Tooltip
-            title="Fjern alle valgte"
-            onClick={() => {
-              setSelected([]);
+      <Typography
+        sx={{flex: '1 1 100%'}}
+        variant="h6"
+        id="tableTitle"
+        component="div"
+      >
+        Grupper
+      </Typography>
+      <>
+        <Tooltip title="Filter">
+          <Autocomplete
+            size="small"
+            id="addFilter"
+            multiple={true}
+            freeSolo
+            style={{width: 500}}
+            onChange={(event: React.SyntheticEvent, value: string[]) => {
+              setFilters(value);
             }}
-          >
-            <IconButton>
-              <ClearIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Send møteforespørsel" onClick={handleClick}>
-            <IconButton>
-              <GroupAddIcon />
-            </IconButton>
-          </Tooltip>
-        </>
-      ) : (
-        <Tooltip title="Filter list">
+            options={interests}
+            renderInput={params => (
+              <TextField {...params} label="Legg til filtrering" />
+            )}
+          />
+        </Tooltip>
+        <Tooltip title="Filter list" onClick={handleFilter}>
           <IconButton>
             <FilterListIcon />
           </IconButton>
         </Tooltip>
-      )}
+      </>
     </Toolbar>
   );
 };
@@ -236,32 +222,34 @@ const EnhancedTableToolbar = (props: EnhancedTableToolbarProps) => {
 export default function EnhancedTable() {
   const [order, setOrder] = React.useState<Order>('asc');
   const [orderBy, setOrderBy] = React.useState<keyof Data>('members');
-  const [selected, setSelected] = React.useState<readonly string[]>([]);
   const [page, setPage] = React.useState(0);
   const [dense] = React.useState(false);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
-
+  const [groups, setGroups] = useState<Data[]>([]);
   const [rows, setRows] = useState<Data[]>([]);
   const user = useContext(AuthContext);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    console.log('Her kommer en test');
-    console.log(user);
     firebaseGroups.once('value', snapshot => {
       const groups: IFirebaseGroups = snapshot.val();
-      console.log(groups);
-      const groupArray = Object.values(groups)
+      const groupArray = Object.entries(groups)
         .filter(
-          (group: IFirebaseGroup) => !group.members.includes(user?.uid ?? '')
+          (group: [string, IFirebaseGroup]) =>
+            !group[1].members.includes(user?.uid ?? '')
         )
-        .map((group: IFirebaseGroup) => {
+        .map((group: [string, IFirebaseGroup]) => {
           return {
-            groupName: group.name,
-            members: group.members ? group.members.length : 0,
-            interests: group.interests ? group.interests.join(', ') : '',
-            description: group.description ? group.description : '',
+            key: group[0],
+            groupName: group[1].name,
+            members: group[1].members ? group[1].members.length : 0,
+            interests: group[1].interests
+              ? group[1].interests.sort().join(', ')
+              : '',
+            description: group[1].description ? group[1].description : '',
           };
         });
+      setGroups(groupArray);
       setRows(groupArray);
     });
   }, []);
@@ -275,33 +263,20 @@ export default function EnhancedTable() {
     setOrderBy(property);
   };
 
-  const handleSelectAllClick = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.checked) {
-      const newSelecteds = rows.map(n => n.groupName);
-      setSelected(newSelecteds);
-      return;
-    }
-    setSelected([]);
+  const checkInterest = (row: Data, interests: string[]) => {
+    return interests.some(interest => row.interests.includes(interest));
   };
 
-  const handleClick = (event: React.MouseEvent<unknown>, name: string) => {
-    const selectedIndex = selected.indexOf(name);
-    let newSelected: readonly string[] = [];
-
-    if (selectedIndex === -1) {
-      newSelected = newSelected.concat(selected, name);
-    } else if (selectedIndex === 0) {
-      newSelected = newSelected.concat(selected.slice(1));
-    } else if (selectedIndex === selected.length - 1) {
-      newSelected = newSelected.concat(selected.slice(0, -1));
-    } else if (selectedIndex > 0) {
-      newSelected = newSelected.concat(
-        selected.slice(0, selectedIndex),
-        selected.slice(selectedIndex + 1)
-      );
+  const handleFiltering = (interests: string[]) => {
+    if (interests.length === 0) {
+      setRows(groups);
+      return;
     }
+    setRows(groups.filter(row => checkInterest(row, interests)));
+  };
 
-    setSelected(newSelected);
+  const handleClick = (event: React.MouseEvent<unknown>, groupKey: string) => {
+    navigate('/group/' + groupKey);
   };
 
   const handleChangePage = (event: unknown, newPage: number) => {
@@ -315,8 +290,6 @@ export default function EnhancedTable() {
     setPage(0);
   };
 
-  const isSelected = (name: string) => selected.indexOf(name) !== -1;
-
   // Avoid a layout jump when reaching the last page with empty rows.
   const emptyRows =
     page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
@@ -325,11 +298,7 @@ export default function EnhancedTable() {
     <Grid container justifyContent="center" marginTop={10}>
       <Box sx={{width: '80%'}}>
         <Paper sx={{width: '100%', mb: 2}}>
-          <EnhancedTableToolbar
-            numSelected={selected.length}
-            selected={selected}
-            setSelected={setSelected}
-          />
+          <EnhancedTableToolbar handleFiltering={handleFiltering} />
           <TableContainer>
             <Table
               sx={{minWidth: 750}}
@@ -337,10 +306,8 @@ export default function EnhancedTable() {
               size={dense ? 'small' : 'medium'}
             >
               <EnhancedTableHead
-                numSelected={selected.length}
                 order={order}
                 orderBy={orderBy}
-                onSelectAllClick={handleSelectAllClick}
                 onRequestSort={handleRequestSort}
                 rowCount={rows.length}
               />
@@ -349,32 +316,18 @@ export default function EnhancedTable() {
               rows.slice().sort(getComparator(order, orderBy)) */}
                 {stableSort(rows, getComparator(order, orderBy))
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((row, index) => {
-                    const isItemSelected = isSelected(row.groupName);
-                    const labelId = `enhanced-table-checkbox-${index}`;
-
+                  .map(row => {
                     return (
                       <TableRow
                         hover
-                        onClick={event => handleClick(event, row.groupName)}
+                        onClick={event => handleClick(event, row.key)}
                         role="checkbox"
-                        aria-checked={isItemSelected}
                         tabIndex={-1}
-                        key={row.groupName}
-                        selected={isItemSelected}
+                        key={row.key}
                       >
-                        <TableCell padding="checkbox">
-                          <Checkbox
-                            color="primary"
-                            checked={isItemSelected}
-                            inputProps={{
-                              'aria-labelledby': labelId,
-                            }}
-                          />
-                        </TableCell>
+                        <TableCell padding="checkbox"></TableCell>
                         <TableCell
                           component="th"
-                          id={labelId}
                           scope="row"
                           padding="none"
                           align="left"
