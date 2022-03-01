@@ -11,13 +11,11 @@ export interface IGroupMember {
   admin: boolean;
 }
 
-export interface IGroup {
+/*export interface IGroup {
   name: string;
   description?: string;
   interests?: IGroupInterest[];
-  //PROBLEM
-  //Ønsker egentlig kun IUser[], feilen skyldes problemet i creategroup/AddToList
   members?: (string | IUser)[];
-  mathcRequests: IGroup[];
+  matchRequests: IGroup[];
   matches: IGroup[];
-}
+}*/

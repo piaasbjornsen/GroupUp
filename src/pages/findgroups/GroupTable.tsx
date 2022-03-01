@@ -21,10 +21,9 @@ import {visuallyHidden} from '@mui/utils';
 import {Grid} from '@mui/material';
 import ClearIcon from '@mui/icons-material/Clear';
 import {groups as firebaseGroups} from '../../service/firebase';
-import {IGroup, IGroupMember} from '../../interfaces/groups';
 import {useEffect, useState} from 'react';
 import {AuthContext} from '../../context/AuthContext';
-import {IUser} from '../../interfaces/users';
+import {IFirebaseGroup, IFirebaseGroups} from '../../interfaces/firebase';
 
 interface Data {
   groupName: string;
@@ -249,20 +248,18 @@ export default function EnhancedTable() {
     console.log('Her kommer en test');
     console.log(user);
     firebaseGroups.once('value', snapshot => {
-      const groups: IGroup = snapshot.val();
+      const groups: IFirebaseGroups = snapshot.val();
       console.log(groups);
-      //PROBLEM
-      //Vet ikke hva User er, har forstått det slik at det er Firebase.User
-      //Problemet med at members er (string | IUser)[] stammer i fra
-      //problemet i creategroup/AddToList
       const groupArray = Object.values(groups)
-        .filter((group: IGroup) => !group.members?.includes(user))
-        .map((group: IGroup) => {
+        .filter(
+          (group: IFirebaseGroup) => !group.members.includes(user?.uid ?? '')
+        )
+        .map((group: IFirebaseGroup) => {
           return {
-            groupName: group['name'],
-            members: group['members'] ? group['members'].length : 0,
-            interests: group['interests'] ? group['interests'].join(', ') : '',
-            description: group['description'] ? group['description'] : '',
+            groupName: group.name,
+            members: group.members ? group.members.length : 0,
+            interests: group.interests ? group.interests.join(', ') : '',
+            description: group.description ? group.description : '',
           };
         });
       setRows(groupArray);
