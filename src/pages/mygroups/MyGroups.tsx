@@ -1,9 +1,30 @@
-import React from 'react';
-import {Grid, Button} from '@mui/material';
+import React, {useState, useContext, useEffect} from 'react';
+import {Grid, Button, Card, CardContent, Typography} from '@mui/material';
 import GroupsIcon from '@mui/icons-material/Groups';
-import {Link} from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
+import {groups as firebaseGroups} from '../../service/firebase';
+import {IFirebaseDb} from '../../interfaces/firebase';
+import {AuthContext} from '../../context/AuthContext';
 
 export default function MyGroups() {
+  const user = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  const [groupList, setGroupList] = useState<IFirebaseDb['groups']>({});
+
+  useEffect(() => {
+    firebaseGroups.once('value', snapshot => {
+      // Fetch groups
+      const groups: IFirebaseDb['groups'] = snapshot.val();
+      Object.keys(groups).forEach(groupKey => {
+        if (groups[groupKey].members.includes(user?.uid ?? '')) {
+          delete groups[groupKey];
+        }
+      });
+      setGroupList(groups);
+    });
+  }, []);
+
   return (
     <Grid
       container
@@ -31,6 +52,36 @@ export default function MyGroups() {
       </Link>
 
       <h1 style={{fontWeight: '300', fontSize: '4em'}}>Mine grupper</h1>
+      <Grid
+        container
+        spacing={5}
+        alignItems="stretch"
+        sx={{width: {sx: 1, sm: '70%'}}}
+      >
+        {Object.keys(groupList).map(groupKey => (
+          <Grid item key={groupKey} xs>
+            <Card
+              sx={{
+                maxWidth: 245,
+                minWidth: {sx: 'default', sm: 200},
+                cursor: 'pointer',
+              }}
+              onClick={() => {
+                navigate('/group/' + groupKey);
+              }}
+            >
+              <CardContent>
+                <Typography variant="h5" component="div">
+                  {groupList[groupKey].name}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {groupList[groupKey].description}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
     </Grid>
   );
 }
