@@ -17,7 +17,8 @@ export default function MyGroups() {
       // Fetch groups
       const groups: IFirebaseDb['groups'] = snapshot.val();
       Object.keys(groups).forEach(groupKey => {
-        if (groups[groupKey].members.includes(user?.uid ?? '')) {
+        if (!groups[groupKey].members.includes(user?.uid ?? '')) {
+          console.log(groups[groupKey]);
           delete groups[groupKey];
         }
       });
