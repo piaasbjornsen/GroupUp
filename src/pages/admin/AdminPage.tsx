@@ -1,74 +1,27 @@
-import React from 'react';
-import {Grid, IconButton, Box} from '@mui/material';
-import ClearIcon from '@mui/icons-material/Clear';
-
-interface GroupInterface {
-  groupID: number;
-  title: string;
-  description: string;
-  interests: string[];
-  members: string[];
-}
+import React, {useState, useEffect} from 'react';
+import {Grid, Box} from '@mui/material';
+import {IFirebaseDb} from '../../interfaces/firebase';
+import {
+  groups as firebaseGroups,
+  users as firebaseUsers,
+} from '../../service/firebase';
 
 export default function AdminPage() {
-  const groups: GroupInterface[] = [
-    {
-      groupID: 1,
-      title: 'Gruppe 1',
-      description: 'Kul gruppe',
-      interests: ['Spill'],
-      members: ['Ellie'],
-    },
-    {
-      groupID: 2,
-      title: 'Gruppe 2',
-      description: 'Kul gruppe',
-      interests: ['Spill', 'mjau'],
-      members: ['Pål', 'Olav'],
-    },
-    {
-      groupID: 3,
-      title: 'Gruppe 3',
-      description: 'VI ER BEST',
-      interests: ['Spill', 'mjau'],
-      members: ['Pål', 'Olav'],
-    },
-    {
-      groupID: 3,
-      title: 'Gruppe 4',
-      description: 'MJAU',
-      interests: ['fotball', 'hest'],
-      members: ['Pål', 'Ole'],
-    },
-    {
-      groupID: 5,
-      title: 'Gruppe 5',
-      description: 'Kul gruppe',
-      interests: ['Spill'],
-      members: ['Ellie'],
-    },
-    {
-      groupID: 6,
-      title: 'Gruppe 6',
-      description: 'Kul gruppe',
-      interests: ['Spill', 'mjau'],
-      members: ['Pål', 'Olav'],
-    },
-    {
-      groupID: 7,
-      title: 'Gruppe 7',
-      description: 'VI ER BEST',
-      interests: ['Spill', 'mjau'],
-      members: ['Pål', 'Olav'],
-    },
-    {
-      groupID: 8,
-      title: 'Gruppe 8',
-      description: 'MJAU',
-      interests: ['fotball', 'hest'],
-      members: ['Pål', 'Ole'],
-    },
-  ];
+  const [groupList, setGroupList] = useState<IFirebaseDb['groups']>({});
+  const [userList, setUserList] = useState<IFirebaseDb['users']>({});
+
+  useEffect(() => {
+    firebaseGroups.once('value', snapshot => {
+      // Fetch groups
+      const groups: IFirebaseDb['groups'] = snapshot.val();
+      setGroupList(groups);
+    });
+    firebaseUsers.once('value', snapshot => {
+      // Fetch users
+      const users: IFirebaseDb['users'] = snapshot.val();
+      setUserList(users);
+    });
+  }, []);
 
   return (
     <Grid
@@ -87,23 +40,20 @@ export default function AdminPage() {
         width="80%"
         margin="0 auto"
       >
-        {groups.map(group => (
-          <Grid key={group.groupID}>
+        {Object.entries(groupList).map(groupItemArray => (
+          <Grid key={groupItemArray[0]}>
             <Box
               sx={{bgcolor: '#96AB94', m: '2em', p: '1em', borderRadius: '5%'}}
             >
               <p style={{fontWeight: 'bold', fontSize: '1.2em'}}>
-                {group.title}
+                {groupItemArray[1].name}
               </p>
-              <p>Beskrivelse: {group.description}</p>
-              <p>Interesser: {group.interests.join(', ')}</p>
+              <p>Beskrivelse: {groupItemArray[1].description}</p>
+              <p>Interesser: {groupItemArray[1].interests.join(', ')}</p>
               <p>Medlemmer:</p>
-              {group.members.map(member => (
-                <p style={{marginTop: '-0.5em'}} key={group.groupID}>
-                  {member}{' '}
-                  <IconButton>
-                    <ClearIcon fontSize="small"></ClearIcon>
-                  </IconButton>
+              {groupItemArray[1].members.map(memberId => (
+                <p style={{marginTop: '-0.5em'}} key={memberId}>
+                  {userList[memberId]?.name}
                 </p>
               ))}
             </Box>
