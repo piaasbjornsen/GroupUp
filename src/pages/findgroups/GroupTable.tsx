@@ -14,6 +14,7 @@ import Paper from '@mui/material/Paper';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import FilterListIcon from '@mui/icons-material/FilterList';
+// eslint-disable-next-line node/no-extraneous-import
 import {visuallyHidden} from '@mui/utils';
 import {Grid, TextField} from '@mui/material';
 import Autocomplete from '@mui/material/Autocomplete';

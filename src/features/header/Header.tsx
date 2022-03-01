@@ -1,10 +1,12 @@
-import React from 'react';
+import React, {useContext} from 'react';
 import {Grid} from '@mui/material';
 import 'typeface-roboto';
 import {signOut} from '../../service/firebase';
 import {Link} from 'react-router-dom';
+import {AuthContext} from '../../context/AuthContext';
 
 export default function Header() {
+  const user = useContext(AuthContext);
   return (
     <Grid
       container
@@ -17,11 +19,11 @@ export default function Header() {
       <h1 id="logo">GroupUp</h1>
       <Grid width="80%" display="flex" justifyContent="space-around">
         <Link to="/">Min side</Link>
-        <Link to="/findgroups">Finn Grupper</Link>
-        <Link to="/" onClick={signOut}>
+        <a>Finn grupper</a>
+        {user?.admin ? <Link to="/admin">Admin</Link> : null}
+        <a onClick={signOut} style={{cursor: 'pointer'}}>
           Logg ut
-        </Link>
-        <Link to="/admin">Admin</Link>
+        </a>
       </Grid>
       <hr
         style={{
