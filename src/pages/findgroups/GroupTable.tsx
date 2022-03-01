@@ -17,6 +17,7 @@ import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
 import FilterListIcon from '@mui/icons-material/FilterList';
+// eslint-disable-next-line node/no-extraneous-import
 import {visuallyHidden} from '@mui/utils';
 import {Grid} from '@mui/material';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -112,14 +113,7 @@ interface EnhancedTableProps {
 }
 
 function EnhancedTableHead(props: EnhancedTableProps) {
-  const {
-    onSelectAllClick,
-    order,
-    orderBy,
-    numSelected,
-    rowCount,
-    onRequestSort,
-  } = props;
+  const {order, orderBy, onRequestSort} = props;
   const createSortHandler =
     (property: keyof Data) => (event: React.MouseEvent<unknown>) => {
       onRequestSort(event, property);
@@ -236,7 +230,7 @@ export default function EnhancedTable() {
   const [orderBy, setOrderBy] = React.useState<keyof Data>('members');
   const [selected, setSelected] = React.useState<readonly string[]>([]);
   const [page, setPage] = React.useState(0);
-  const [dense, setDense] = React.useState(false);
+  const [dense] = React.useState(false);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
 
   const [rows, setRows] = useState<Data[]>([]);
@@ -274,11 +268,7 @@ export default function EnhancedTable() {
     setSelected([]);
   };
 
-  const handleClick = (
-    event: React.MouseEvent<unknown>,
-    name: string,
-    row: Data
-  ) => {
+  const handleClick = (event: React.MouseEvent<unknown>, name: string) => {
     //console.log(row)
     const selectedIndex = selected.indexOf(name);
     let newSelected: readonly string[] = [];
@@ -351,9 +341,7 @@ export default function EnhancedTable() {
                     return (
                       <TableRow
                         hover
-                        onClick={event =>
-                          handleClick(event, row.groupName, row)
-                        }
+                        onClick={event => handleClick(event, row.groupName)}
                         role="checkbox"
                         aria-checked={isItemSelected}
                         tabIndex={-1}
