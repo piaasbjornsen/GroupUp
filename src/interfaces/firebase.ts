@@ -1,5 +1,8 @@
 type IFirebaseGroupId = string;
-type IFirebaseUserId = string;
+
+export type IFirebaseUserId = string;
+export type IFirebaseUserName = string;
+
 type IFirebaseInterestId = string;
 
 export interface IFirebaseGroup {
@@ -12,18 +15,24 @@ export interface IFirebaseGroup {
 export type IFirebaseInterest = string;
 
 export interface IFirebaseUser {
-  name: string;
+  name: IFirebaseUserName;
   admin: boolean;
 }
 
+export interface IFirebaseGroups {
+  [key: IFirebaseGroupId]: IFirebaseGroup;
+}
+
+export interface IFirebaseInterests {
+  [key: IFirebaseInterestId]: IFirebaseInterest;
+}
+
+export interface IFirebaseUsers {
+  [key: IFirebaseUserId]: IFirebaseUser;
+}
+
 export interface IFirebaseDb {
-  groups: {
-    [key: IFirebaseGroupId]: IFirebaseGroup;
-  };
-  interests: {
-    [key: IFirebaseInterestId]: IFirebaseInterest;
-  };
-  users: {
-    [key: IFirebaseUserId]: IFirebaseUser;
-  };
+  groups: IFirebaseGroups;
+  interests: IFirebaseInterests;
+  users: IFirebaseUsers;
 }

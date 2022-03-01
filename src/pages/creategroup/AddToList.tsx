@@ -1,41 +1,48 @@
-import {Grid, Button} from '@mui/material';
+import {Grid, Button, Alert} from '@mui/material';
 import TextField from '@mui/material/TextField';
 import Autocomplete from '@mui/material/Autocomplete';
-import React, {SyntheticEvent, useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {groups as firebaseGroups} from '../../service/firebase';
 import {interests as firebaseInterests} from '../../service/firebase';
 import {users as firebaseUsers} from '../../service/firebase';
 import {
-  IGroup,
-  IGroupInterest,
-  IGroupMember,
-  Users,
-} from '../../interfaces/groups';
+  IFirebaseDb,
+  IFirebaseGroup,
+  IFirebaseInterest,
+  IFirebaseUserId,
+  IFirebaseUserName,
+} from '../../interfaces/firebase';
 
-interface IProps {
-  groups: IGroup[];
-  setGroups: React.Dispatch<React.SetStateAction<IGroup[]>>;
+interface IUserListItem {
+  id: IFirebaseUserId;
+  name: IFirebaseUserName;
 }
 
-const AddToList: React.FC<IProps> = ({groups, setGroups}) => {
-  const [input, setInput] = useState<IGroup>({name: ''});
-  const [interests, setInterests] = useState<IGroupInterest[]>([]);
-  const [users, setUsers] = useState<String[]>([]);
+const emptyGroupObject = {
+  name: '',
+  description: '',
+  interests: [],
+  members: [],
+};
 
-  const [state, setState] = useState({reset: false});
+const AddToList: React.FC = () => {
+  const [input, setInput] = useState<IFirebaseGroup>(emptyGroupObject);
+  const [interests, setInterests] = useState<IFirebaseInterest[]>([]);
+  const [users, setUsers] = useState<IUserListItem[]>([]);
+
+  const [resetForm, setResetForm] = useState(false);
 
   useEffect(() => {
     firebaseUsers.once('value', snapshot => {
-      const users: Users = snapshot.val();
-      console.log(users);
-      const userArray = Object.values(users).map((user: IGroupMember) => {
-        return user['name'];
-      });
-      setUsers(userArray);
-      firebaseInterests.once('value', snapshot => {
-        const interests = snapshot.val();
-        setInterests(interests);
-      });
+      const users: IFirebaseDb['users'] = snapshot.val();
+      const userList: IUserListItem[] = Object.keys(users).map<IUserListItem>(
+        userId => ({id: userId, name: users[userId].name})
+      );
+      setUsers(userList);
+    });
+    firebaseInterests.once('value', snapshot => {
+      const interests = snapshot.val();
+      setInterests(interests);
     });
   }, []);
 
@@ -53,32 +60,26 @@ const AddToList: React.FC<IProps> = ({groups, setGroups}) => {
       return;
     }
 
-    const newGroup: IGroup = {
-      name: input.name,
-      description: input.description,
-      members: input.members,
-      interests: input.interests,
-    };
+    firebaseGroups.push(input);
 
-    firebaseGroups.push(newGroup);
+    setInput(emptyGroupObject);
 
-    setGroups([...groups, newGroup]);
-
-    setInput({
-      name: '',
-      description: '',
-    });
-
-    setState({
-      reset: !state.reset,
-    });
+    setResetForm(!resetForm);
   };
-
-  const reseter = state.reset ? '1' : '2';
 
   return (
     <>
       <Grid container justifyContent="center" marginTop={5}>
+        <Grid
+          container
+          justifyContent="center"
+          marginBottom={2}
+          display={input.name === '' ? 'inherit' : 'none'}
+        >
+          <Alert severity="error" style={{width: 500}}>
+            Du må gi gruppen et navn
+          </Alert>
+        </Grid>
         <TextField
           style={{width: 500}}
           required
@@ -104,29 +105,33 @@ const AddToList: React.FC<IProps> = ({groups, setGroups}) => {
       </Grid>
       <Grid container justifyContent="center" marginTop={5}>
         <Autocomplete
-          key={reseter}
+          key={'users' + resetForm}
           id="addUsers"
           multiple
           freeSolo
           style={{width: 500}}
           onChange={(
-            event: SyntheticEvent<Element, Event>,
-            value: (string | String)[]
+            event: React.SyntheticEvent,
+            value: (string | IUserListItem)[]
           ) => {
+            const userIds = value.map(userListItem =>
+              typeof userListItem !== 'string' ? userListItem.id : userListItem
+            );
             setInput({
               ...input,
-              members: value,
+              members: userIds,
             });
           }}
           options={users}
+          getOptionLabel={option => option.name}
           renderInput={params => (
-            <TextField {...params} label="Legg til brukere" />
+            <TextField {...params} label="Legg til medlemmer" />
           )}
         />
       </Grid>
       <Grid container justifyContent="center" marginTop={5}>
         <Autocomplete
-          key={reseter}
+          key={'interests' + resetForm}
           id="addInterests"
           multiple={true}
           freeSolo
@@ -143,7 +148,7 @@ const AddToList: React.FC<IProps> = ({groups, setGroups}) => {
           )}
         />
       </Grid>
-      <Grid container justifyContent="center" marginTop={5}>
+      <Grid container justifyContent="center" marginTop={5} marginBottom={10}>
         <Button variant="contained" onClick={handleClick}>
           Legg til gruppe
         </Button>

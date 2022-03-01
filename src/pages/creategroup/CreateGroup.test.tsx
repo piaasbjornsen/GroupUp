@@ -8,7 +8,7 @@ test('renders main create group components', () => {
     'Opprett gruppe',
     'Gruppenavn',
     'Beskrivelse',
-    'Legg til brukere',
+    'Legg til medlemmer',
     'Legg til interesser',
   ];
   expectedTexts.forEach(text => {
