@@ -1,7 +1,7 @@
 import {Grid, Button, CssBaseline, Typography} from '@mui/material';
 import TextField from '@mui/material/TextField';
 import Autocomplete from '@mui/material/Autocomplete';
-import React, {useEffect, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {groups as firebaseGroups} from '../../service/firebase';
 import {interests as firebaseInterests} from '../../service/firebase';
 import {users as firebaseUsers} from '../../service/firebase';
@@ -13,7 +13,8 @@ import {
   IFirebaseUserId,
   IFirebaseUserName,
 } from '../../interfaces/firebase';
-import {useParams} from 'react-router-dom';
+import {Link, useParams} from 'react-router-dom';
+import {AuthContext} from '../../context/AuthContext';
 
 //Bruker i liste
 interface IUserListItem {
@@ -37,6 +38,7 @@ const AddToList: React.FC = () => {
   const [resetForm, setResetForm] = useState(false);
 
   const urlParams = useParams();
+  const user = useContext(AuthContext);
 
   useEffect(() => {
     console.log(urlParams);
@@ -73,6 +75,46 @@ const AddToList: React.FC = () => {
     return <p>Laster inn</p>;
   }
 
+  if (!group.members?.includes(user?.uid ?? '')) {
+    return (
+      <>
+        <>
+          <CssBaseline />
+          <Grid container justifyContent="center" marginTop={5}>
+            {' '}
+            {/* Overskriften på siden, hentet fra react */}
+            <GroupsIcon fontSize="large" />
+            <Typography variant="h4" marginLeft={2}>
+              {group?.name}
+            </Typography>
+          </Grid>
+        </>
+        <Grid container justifyContent="center" marginTop={5}>
+          {' '}
+          {/* Beskrivelsen */}
+          <Typography variant="body1" style={{width: 500}}>
+            {group?.description}
+          </Typography>
+        </Grid>
+        <Grid container justifyContent="center" marginTop={5}>
+          <Typography variant="body1" style={{width: 500}}>
+            {group?.members
+              .map(
+                (userId: IFirebaseUserId) =>
+                  users.find(user => user.id === userId)?.name
+              )
+              .join(', ')}
+          </Typography>
+        </Grid>
+        <Grid container justifyContent="center" marginTop={5}>
+          <Typography variant="body1" style={{width: 500}}>
+            {group?.interests.join(', ')}
+          </Typography>
+        </Grid>
+      </>
+    );
+  }
+
   const handleChange = (
     e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
   ): void => {
@@ -93,10 +135,24 @@ const AddToList: React.FC = () => {
       ...group,
       ...input,
     };
+    if (
+      (updatedData?.name ?? '') === '' ||
+      (updatedData?.description ?? '') === '' ||
+      (updatedData?.members ?? []).length <= 1 ||
+      (updatedData?.interests ?? []).length === 0
+    ) {
+      console.log('Invalid data');
+      console.log(updatedData);
+      console.log(
+        (updatedData?.name ?? '') === '',
+        (updatedData?.description ?? '') === '',
+        (updatedData?.members ?? []).length <= 1,
+        (updatedData?.interests ?? []).length === 0
+      );
+      return;
+    }
     console.log(updatedData);
     firebaseGroups.child(urlParams?.groupId ?? '').update(updatedData);
-
-    setInput(emptyGroupObject);
   };
 
   return (
@@ -112,6 +168,11 @@ const AddToList: React.FC = () => {
           </Typography>
         </Grid>
       </>
+      <Grid container justifyContent="center" marginTop={3}>
+        <Link to={'/groups/' + urlParams.groupId + '/findgroups'}>
+          <Button variant={'contained'}>Finn andre grupper</Button>
+        </Link>
+      </Grid>
       <Grid container justifyContent="center" marginTop={5}>
         {' '}
         {/* Beskrivelsen */}

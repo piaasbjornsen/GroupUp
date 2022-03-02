@@ -28,8 +28,11 @@ function App() {
               <Route path="/" element={<MyGroups />}></Route>
               <Route path="/admin" element={<AdminPage />}></Route>
               <Route path="/creategroup" element={<CreateGroup />}></Route>
-              <Route path="/findgroups" element={<GroupTable />}></Route>
               <Route path="/groups/:groupId" element={<ThisGroup />}></Route>
+              <Route
+                path="/groups/:groupId/findgroups"
+                element={<GroupTable />}
+              ></Route>
             </Routes>
           </>
         )}

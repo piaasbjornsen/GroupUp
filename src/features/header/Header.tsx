@@ -19,11 +19,10 @@ export default function Header() {
       <h1 id="logo">GroupUp</h1>
       <Grid width="80%" display="flex" justifyContent="space-around">
         <Link to="/">Min side</Link>
-        <a>Finn grupper</a>
         {user?.admin ? <Link to="/admin">Admin</Link> : null}
-        <a onClick={signOut} style={{cursor: 'pointer'}}>
+        <Link to="/" onClick={signOut}>
           Logg ut
-        </a>
+        </Link>
       </Grid>
       <hr
         style={{

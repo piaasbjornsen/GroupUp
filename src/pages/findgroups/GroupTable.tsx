@@ -1,4 +1,4 @@
-import React, {useContext} from 'react';
+import React from 'react';
 import Box from '@mui/material/Box';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -26,8 +26,7 @@ import {
   IFirebaseGroups,
   IFirebaseInterest,
 } from '../../interfaces/firebase';
-import {AuthContext} from '../../context/AuthContext';
-import {useNavigate} from 'react-router-dom';
+import {useNavigate, useParams} from 'react-router-dom';
 
 interface Data {
   key: string;
@@ -225,19 +224,18 @@ export default function EnhancedTable() {
   const [orderBy, setOrderBy] = React.useState<keyof Data>('members');
   const [page, setPage] = React.useState(0);
   const [dense] = React.useState(false);
-  const [rowsPerPage, setRowsPerPage] = React.useState(5);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [groups, setGroups] = useState<Data[]>([]);
   const [rows, setRows] = useState<Data[]>([]);
-  const user = useContext(AuthContext);
   const navigate = useNavigate();
+  const urlParams = useParams();
 
   useEffect(() => {
     firebaseGroups.once('value', snapshot => {
       const groups: IFirebaseGroups = snapshot.val();
       const groupArray = Object.entries(groups)
         .filter(
-          (group: [string, IFirebaseGroup]) =>
-            !group[1].members.includes(user?.uid ?? '')
+          (group: [string, IFirebaseGroup]) => group[0] !== urlParams.groupId
         )
         .map((group: [string, IFirebaseGroup]) => {
           return {
@@ -277,7 +275,7 @@ export default function EnhancedTable() {
   };
 
   const handleClick = (event: React.MouseEvent<unknown>, groupKey: string) => {
-    navigate('/group/' + groupKey);
+    navigate('/groups/' + groupKey);
   };
 
   const handleChangePage = (event: unknown, newPage: number) => {
