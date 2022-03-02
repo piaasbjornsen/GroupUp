@@ -17,7 +17,8 @@ export default function MyGroups() {
       // Fetch groups
       const groups: IFirebaseDb['groups'] = snapshot.val();
       Object.keys(groups).forEach(groupKey => {
-        if (!groups[groupKey].members.includes(user?.uid ?? '')) {
+        if (!groups[groupKey].members?.includes(user?.uid ?? '')) {
+          // Remove groups that the user is not a member of
           console.log(groups[groupKey]);
           delete groups[groupKey];
         }
@@ -68,7 +69,7 @@ export default function MyGroups() {
                 cursor: 'pointer',
               }}
               onClick={() => {
-                navigate('/group/' + groupKey);
+                navigate('/groups/' + groupKey);
               }}
             >
               <CardContent>

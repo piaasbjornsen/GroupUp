@@ -49,9 +49,9 @@ export default function AdminPage() {
                 {groupItemArray[1].name}
               </p>
               <p>Beskrivelse: {groupItemArray[1].description}</p>
-              <p>Interesser: {groupItemArray[1].interests.join(', ')}</p>
+              <p>Interesser: {groupItemArray[1].interests?.join(', ')}</p>
               <p>Medlemmer:</p>
-              {groupItemArray[1].members.map(memberId => (
+              {groupItemArray[1].members?.map(memberId => (
                 <p style={{marginTop: '-0.5em'}} key={memberId}>
                   {userList[memberId]?.name}
                 </p>
