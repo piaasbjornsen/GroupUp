@@ -28,6 +28,8 @@ const emptyGroupObject = {
   description: '',
   interests: [],
   members: [],
+  likes: [],
+  matches: [],
 };
 
 const AddToList: React.FC = () => {

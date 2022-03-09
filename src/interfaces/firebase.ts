@@ -10,6 +10,18 @@ export interface IFirebaseGroup {
   description: string;
   interests: IFirebaseInterestId[];
   members: IFirebaseUserId[];
+  likes: IFirebaseLike[];
+  matches: IFirebaseMatch[];
+}
+
+export interface IFirebaseLike {
+  id: IFirebaseGroupId;
+  super: boolean;
+}
+
+export interface IFirebaseMatch {
+  id: IFirebaseGroupId;
+  date: string;
 }
 
 export type IFirebaseInterest = string;
