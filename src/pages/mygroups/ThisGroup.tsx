@@ -1,4 +1,11 @@
-import {Grid, Button, CssBaseline, Typography} from '@mui/material';
+import {
+  Grid,
+  Button,
+  CssBaseline,
+  Typography,
+  Card,
+  CardContent,
+} from '@mui/material';
 import TextField from '@mui/material/TextField';
 import Autocomplete from '@mui/material/Autocomplete';
 import React, {useContext, useEffect, useState} from 'react';
@@ -12,8 +19,9 @@ import {
   IFirebaseInterest,
   IFirebaseUserId,
   IFirebaseUserName,
+  IFirebaseGroups,
 } from '../../interfaces/firebase';
-import {Link, useParams} from 'react-router-dom';
+import {Link, useNavigate, useParams} from 'react-router-dom';
 import {AuthContext} from '../../context/AuthContext';
 
 //Bruker i liste
@@ -38,9 +46,11 @@ const AddToList: React.FC = () => {
   const [users, setUsers] = useState<IUserListItem[]>([]);
   const [group, setGroup] = useState<IFirebaseGroup | null>(null);
   const [resetForm, setResetForm] = useState(false);
+  const [matchedGroups, setMatchedGroups] = useState<IFirebaseGroups>({});
 
   const urlParams = useParams();
   const user = useContext(AuthContext);
+  const navigate = useNavigate();
 
   useEffect(() => {
     console.log(urlParams);
@@ -70,6 +80,17 @@ const AddToList: React.FC = () => {
     firebaseInterests.once('value', snapshot => {
       const interests = snapshot.val();
       setInterests(interests);
+    });
+  }, []);
+
+  useEffect(() => {
+    setMatchedGroups({
+      groupId: {
+        name: 'testGruppe',
+        description: 'Vi liker kake',
+        interests: ['kake', 'coockies'],
+        members: ['Pia', 'Jonatan'],
+      },
     });
   }, []);
 
@@ -246,10 +267,52 @@ const AddToList: React.FC = () => {
           )}
         />
       </Grid>
-      <Grid container justifyContent="center" marginTop={5} marginBottom={10}>
+      <Grid container justifyContent="center" marginTop={5}>
         <Button variant="contained" onClick={handleClick}>
           Oppdater
         </Button>
+      </Grid>
+      <Grid
+        container
+        spacing={0}
+        direction="column"
+        alignItems="center"
+        justifyContent="center"
+        marginBottom={10}
+      >
+        <Typography variant="h4" marginLeft={2} marginTop={5} marginBottom={5}>
+          Matchede grupper
+        </Typography>
+        <Grid
+          container
+          spacing={5}
+          alignItems="stretch"
+          sx={{width: {sx: 1, sm: '70%'}}}
+        >
+          {Object.keys(matchedGroups).map(groupId => (
+            <Grid item key={groupId} xs>
+              <Card
+                sx={{
+                  maxWidth: 245,
+                  minWidth: {sx: 'default', sm: 200},
+                  cursor: 'pointer',
+                }}
+                onClick={() => {
+                  navigate('/groups/' + groupId);
+                }}
+              >
+                <CardContent>
+                  <Typography variant="h5" component="div">
+                    {matchedGroups[groupId].name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {matchedGroups[groupId].description}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
       </Grid>
     </>
   );
