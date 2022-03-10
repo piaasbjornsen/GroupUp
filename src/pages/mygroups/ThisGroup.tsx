@@ -19,7 +19,7 @@ import {
   IFirebaseInterest,
   IFirebaseUserId,
   IFirebaseUserName,
-  IFirebaseGroups,
+  IFirebaseMatch,
 } from '../../interfaces/firebase';
 import {Link, useNavigate, useParams} from 'react-router-dom';
 import {AuthContext} from '../../context/AuthContext';
@@ -29,6 +29,8 @@ interface IUserListItem {
   id: IFirebaseUserId;
   name: IFirebaseUserName;
 }
+
+interface IMatchListItem extends IFirebaseGroup, IFirebaseMatch {}
 
 //Gruppeobjekt
 const emptyGroupObject = {
@@ -46,7 +48,7 @@ const AddToList: React.FC = () => {
   const [users, setUsers] = useState<IUserListItem[]>([]);
   const [group, setGroup] = useState<IFirebaseGroup | null>(null);
   const [resetForm, setResetForm] = useState(false);
-  const [matchedGroups, setMatchedGroups] = useState<IFirebaseGroups>({});
+  const [matchedGroups, setMatchedGroups] = useState<IMatchListItem[]>([]);
 
   const urlParams = useParams();
   const user = useContext(AuthContext);
@@ -57,10 +59,18 @@ const AddToList: React.FC = () => {
 
     firebaseGroups.once('value', snapshot => {
       const groups: IFirebaseDb['groups'] = snapshot.val();
+      const thisGroup = groups[urlParams.groupId ?? ''];
       if (groups[urlParams.groupId ?? ''] ?? false) {
-        setGroup(groups[urlParams.groupId ?? '']);
-        setInput(groups[urlParams.groupId ?? '']);
-        console.log(groups[urlParams.groupId ?? '']);
+        setGroup(thisGroup);
+        setInput(thisGroup);
+
+        const matchList: IMatchListItem[] =
+          thisGroup.matches.map<IMatchListItem>(match => ({
+            ...groups[match.id],
+            ...match,
+          }));
+
+        setMatchedGroups(matchList); //Må lage objekter av ID fra matched group
 
         firebaseUsers.once('value', snapshot => {
           const users: IFirebaseDb['users'] = snapshot.val();
@@ -80,17 +90,6 @@ const AddToList: React.FC = () => {
     firebaseInterests.once('value', snapshot => {
       const interests = snapshot.val();
       setInterests(interests);
-    });
-  }, []);
-
-  useEffect(() => {
-    setMatchedGroups({
-      groupId: {
-        name: 'testGruppe',
-        description: 'Vi liker kake',
-        interests: ['kake', 'coockies'],
-        members: ['Pia', 'Jonatan'],
-      },
     });
   }, []);
 
@@ -289,8 +288,8 @@ const AddToList: React.FC = () => {
           alignItems="stretch"
           sx={{width: {sx: 1, sm: '70%'}}}
         >
-          {Object.keys(matchedGroups).map(groupId => (
-            <Grid item key={groupId} xs>
+          {matchedGroups.map(group => (
+            <Grid item key={group.id} xs>
               <Card
                 sx={{
                   maxWidth: 245,
@@ -298,15 +297,26 @@ const AddToList: React.FC = () => {
                   cursor: 'pointer',
                 }}
                 onClick={() => {
-                  navigate('/groups/' + groupId);
+                  navigate('/groups/' + group.id);
                 }}
               >
                 <CardContent>
                   <Typography variant="h5" component="div">
-                    {matchedGroups[groupId].name}
+                    {group.name}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    {matchedGroups[groupId].description}
+                    {group.description}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    marginTop={2}
+                    marginBottom={1}
+                  >
+                    Matchdato:
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {group.date}
                   </Typography>
                 </CardContent>
               </Card>
