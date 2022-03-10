@@ -1,4 +1,11 @@
-import {Grid, Button, CssBaseline, Typography} from '@mui/material';
+import {
+  Grid,
+  Button,
+  CssBaseline,
+  Typography,
+  Card,
+  CardContent,
+} from '@mui/material';
 import TextField from '@mui/material/TextField';
 import Autocomplete from '@mui/material/Autocomplete';
 import React, {useContext, useEffect, useState} from 'react';
@@ -12,8 +19,9 @@ import {
   IFirebaseInterest,
   IFirebaseUserId,
   IFirebaseUserName,
+  IFirebaseMatch,
 } from '../../interfaces/firebase';
-import {Link, useParams} from 'react-router-dom';
+import {Link, useNavigate, useParams} from 'react-router-dom';
 import {AuthContext} from '../../context/AuthContext';
 
 //Bruker i liste
@@ -21,6 +29,8 @@ interface IUserListItem {
   id: IFirebaseUserId;
   name: IFirebaseUserName;
 }
+
+interface IMatchListItem extends IFirebaseGroup, IFirebaseMatch {}
 
 //Gruppeobjekt
 const emptyGroupObject = {
@@ -38,19 +48,29 @@ const AddToList: React.FC = () => {
   const [users, setUsers] = useState<IUserListItem[]>([]);
   const [group, setGroup] = useState<IFirebaseGroup | null>(null);
   const [resetForm, setResetForm] = useState(false);
+  const [matchedGroups, setMatchedGroups] = useState<IMatchListItem[]>([]);
 
   const urlParams = useParams();
   const user = useContext(AuthContext);
+  const navigate = useNavigate();
 
   useEffect(() => {
     console.log(urlParams);
 
     firebaseGroups.once('value', snapshot => {
       const groups: IFirebaseDb['groups'] = snapshot.val();
+      const thisGroup = groups[urlParams.groupId ?? ''];
       if (groups[urlParams.groupId ?? ''] ?? false) {
-        setGroup(groups[urlParams.groupId ?? '']);
-        setInput(groups[urlParams.groupId ?? '']);
-        console.log(groups[urlParams.groupId ?? '']);
+        setGroup(thisGroup);
+        setInput(thisGroup);
+
+        const matchList: IMatchListItem[] =
+          thisGroup.matches.map<IMatchListItem>(match => ({
+            ...groups[match.id],
+            ...match,
+          }));
+
+        setMatchedGroups(matchList); //Må lage objekter av ID fra matched group
 
         firebaseUsers.once('value', snapshot => {
           const users: IFirebaseDb['users'] = snapshot.val();
@@ -246,10 +266,63 @@ const AddToList: React.FC = () => {
           )}
         />
       </Grid>
-      <Grid container justifyContent="center" marginTop={5} marginBottom={10}>
+      <Grid container justifyContent="center" marginTop={5}>
         <Button variant="contained" onClick={handleClick}>
           Oppdater
         </Button>
+      </Grid>
+      <Grid
+        container
+        spacing={0}
+        direction="column"
+        alignItems="center"
+        justifyContent="center"
+        marginBottom={10}
+      >
+        <Typography variant="h4" marginLeft={2} marginTop={5} marginBottom={5}>
+          Matchede grupper
+        </Typography>
+        <Grid
+          container
+          spacing={5}
+          alignItems="stretch"
+          sx={{width: {sx: 1, sm: '70%'}}}
+        >
+          {matchedGroups.map(group => (
+            <Grid item key={group.id} xs>
+              <Card
+                sx={{
+                  maxWidth: 245,
+                  minWidth: {sx: 'default', sm: 200},
+                  cursor: 'pointer',
+                }}
+                onClick={() => {
+                  navigate('/groups/' + group.id);
+                }}
+              >
+                <CardContent>
+                  <Typography variant="h5" component="div">
+                    {group.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {group.description}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    marginTop={2}
+                    marginBottom={1}
+                  >
+                    Matchdato:
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {group.date}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
       </Grid>
     </>
   );
