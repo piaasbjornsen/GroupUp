@@ -23,6 +23,12 @@ import {
 } from '../../interfaces/firebase';
 import {Link, useNavigate, useParams} from 'react-router-dom';
 import {AuthContext} from '../../context/AuthContext';
+import validateGroupData, {
+  emptyErrorMessages,
+  groupHasErrorMessages,
+  IErrorMessages,
+} from '../../utils/validateGroupData';
+import {ContainedAlert} from '../../features/containedalert/ContainedAlert';
 
 //Bruker i liste
 interface IUserListItem {
@@ -43,12 +49,18 @@ const emptyGroupObject = {
 };
 
 const AddToList: React.FC = () => {
+  const currentUser = useContext(AuthContext);
+
   const [input, setInput] = useState<IFirebaseGroup>(emptyGroupObject);
   const [interests, setInterests] = useState<IFirebaseInterest[]>([]);
   const [users, setUsers] = useState<IUserListItem[]>([]);
   const [group, setGroup] = useState<IFirebaseGroup | null>(null);
   const [resetForm, setResetForm] = useState(false);
   const [matchedGroups, setMatchedGroups] = useState<IMatchListItem[]>([]);
+  const [errorMessages, setErrorMessages] =
+    useState<IErrorMessages>(emptyErrorMessages);
+  const [updateSucceeded, setUpdateSucceeded] = useState(false);
+  const [invalidGroupId, setInvalidGroupId] = useState(false);
 
   const urlParams = useParams();
   const user = useContext(AuthContext);
@@ -84,7 +96,8 @@ const AddToList: React.FC = () => {
           setResetForm(!resetForm);
         });
       } else {
-        console.log('false');
+        console.log('Invalid group-id');
+        setInvalidGroupId(true);
       }
     });
     firebaseInterests.once('value', snapshot => {
@@ -93,8 +106,12 @@ const AddToList: React.FC = () => {
     });
   }, []);
 
-  if (group === null || users === null || input === null) {
-    return <p>Laster inn</p>;
+  if (invalidGroupId) {
+    return <ContainedAlert severity="error" message="Ugyldig gruppe id" />;
+  }
+
+  if (group === null || users === null || interests === null) {
+    return <ContainedAlert severity="info" message="Laster inn..." />;
   }
 
   if (!group.members?.includes(user?.uid ?? '')) {
@@ -137,6 +154,15 @@ const AddToList: React.FC = () => {
     );
   }
 
+  if (currentUser === null || !group.members.includes(currentUser?.uid)) {
+    return (
+      <ContainedAlert
+        severity="error"
+        message="Du må være med i gruppen for å kunne se denne siden."
+      />
+    );
+  }
+
   const handleChange = (
     e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
   ): void => {
@@ -147,34 +173,43 @@ const AddToList: React.FC = () => {
   };
 
   const handleClick = (): void => {
-    if (urlParams?.groupId === '') {
-      console.log('Invalid group');
-      return;
+    // Add current user to the group
+    if (
+      !input.members.includes(currentUser?.uid ?? '') &&
+      currentUser !== null
+    ) {
+      input.members.push(currentUser?.uid);
     }
+
+    // Clear error messages
+    setErrorMessages(emptyErrorMessages);
+    setResetForm(!resetForm);
 
     const updatedData = {
       // Mulig vi må endre denne, da det er en bug når vi oppdaterer siden.
       ...group,
       ...input,
     };
-    if (
-      (updatedData?.name ?? '') === '' ||
-      (updatedData?.description ?? '') === '' ||
-      (updatedData?.members ?? []).length <= 1 ||
-      (updatedData?.interests ?? []).length === 0
-    ) {
-      console.log('Invalid data');
-      console.log(updatedData);
-      console.log(
-        (updatedData?.name ?? '') === '',
-        (updatedData?.description ?? '') === '',
-        (updatedData?.members ?? []).length <= 1,
-        (updatedData?.interests ?? []).length === 0
-      );
+
+    const updatedErrorMessages = validateGroupData(updatedData);
+
+    if (groupHasErrorMessages(updatedErrorMessages)) {
+      setErrorMessages(updatedErrorMessages);
+      setResetForm(!resetForm);
       return;
     }
-    console.log(updatedData);
-    firebaseGroups.child(urlParams?.groupId ?? '').update(updatedData);
+
+    firebaseGroups
+      .child(urlParams?.groupId ?? '')
+      .update(updatedData)
+      .then(() => {
+        setUpdateSucceeded(true);
+        setResetForm(!resetForm);
+        setTimeout(() => {
+          setUpdateSucceeded(false);
+          setResetForm(!resetForm);
+        }, 2000);
+      });
   };
 
   return (
@@ -196,8 +231,9 @@ const AddToList: React.FC = () => {
         </Link>
       </Grid>
       <Grid container justifyContent="center" marginTop={5}>
-        {' '}
-        {/* Beskrivelsen */}
+        {errorMessages.description === '' ? null : (
+          <ContainedAlert message={errorMessages.description} />
+        )}
         <TextField
           style={{width: 500}}
           id="outlined-multiline-static"
@@ -213,6 +249,9 @@ const AddToList: React.FC = () => {
         />
       </Grid>
       <Grid container justifyContent="center" marginTop={5}>
+        {errorMessages.members === '' ? null : (
+          <ContainedAlert message={errorMessages.members} />
+        )}
         <Autocomplete
           key={'users' + resetForm}
           id="addUsers"
@@ -231,14 +270,16 @@ const AddToList: React.FC = () => {
               members: userIds,
             });
           }}
-          defaultValue={group?.members.map(userId => {
-            return (
-              users.find(userItem => userItem.id === userId) ?? {
-                id: '',
-                name: 'Ugyldig bruker',
-              }
-            );
-          })}
+          defaultValue={group?.members
+            .filter(userId => userId !== currentUser?.uid)
+            .map(userId => {
+              return (
+                users.find(userItem => userItem.id === userId) ?? {
+                  id: '',
+                  name: 'Ugyldig bruker',
+                }
+              );
+            })}
           options={users}
           getOptionLabel={option => option.name}
           renderInput={params => (
@@ -246,7 +287,10 @@ const AddToList: React.FC = () => {
           )}
         />
       </Grid>
-      <Grid container justifyContent="center" marginTop={5}>
+      <Grid container justifyContent="center" marginTop={5} marginBottom={3}>
+        {errorMessages.interests === '' ? null : (
+          <ContainedAlert message={errorMessages.interests} />
+        )}
         <Autocomplete
           key={'interests' + resetForm}
           id="addInterests"
@@ -266,7 +310,10 @@ const AddToList: React.FC = () => {
           )}
         />
       </Grid>
-      <Grid container justifyContent="center" marginTop={5}>
+      {updateSucceeded ? (
+        <ContainedAlert severity="success" message="Gruppen ble oppdatert!" />
+      ) : null}
+      <Grid container justifyContent="center" marginTop={2} marginBottom={10}>
         <Button variant="contained" onClick={handleClick}>
           Oppdater
         </Button>

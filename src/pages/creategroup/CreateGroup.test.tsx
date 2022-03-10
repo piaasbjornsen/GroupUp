@@ -1,9 +1,14 @@
 import React from 'react';
 import {render, screen} from '@testing-library/react';
 import CreateGroup from './CreateGroup';
+import {MemoryRouter} from 'react-router-dom';
 
 test('renders main create group components', () => {
-  render(<CreateGroup />);
+  render(
+    <MemoryRouter>
+      <CreateGroup />
+    </MemoryRouter>
+  );
   const expectedTexts = [
     'Opprett gruppe',
     'Gruppenavn',

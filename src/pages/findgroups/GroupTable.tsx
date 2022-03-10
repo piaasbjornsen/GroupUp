@@ -338,7 +338,9 @@ export default function EnhancedTable() {
                           {row.members}
                         </TableCell>
                         <TableCell size="small" align="left">
-                          {row.description}{' '}
+                          {row.description.length > 100
+                            ? row.description.substring(0, 100).trim() + '..'
+                            : row.description}{' '}
                         </TableCell>
                         <TableCell size="small" align="left">
                           {row.interests}{' '}

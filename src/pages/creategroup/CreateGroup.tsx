@@ -9,7 +9,7 @@ export default function CreateGroup() {
       <CssBaseline />
       <Grid container justifyContent="center" marginTop={5}>
         <GroupsIcon fontSize="large" />
-        <Typography variant="h4" marginLeft={2}>
+        <Typography variant="h5" marginLeft={2}>
           Opprett gruppe
         </Typography>
         <AddToList />
