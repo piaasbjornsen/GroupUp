@@ -12,6 +12,12 @@ import {
   IFirebaseUserId,
   IFirebaseUserName,
 } from '../../interfaces/firebase';
+import {useNavigate} from 'react-router-dom';
+import validateGroupData, {
+  emptyErrorMessages,
+  IErrorMessages,
+} from '../../utils/validateGroupData';
+import {ContainedAlert} from '../../features/containedalert/ContainedAlert';
 
 interface IUserListItem {
   id: IFirebaseUserId;
@@ -29,8 +35,12 @@ const AddToList: React.FC = () => {
   const [input, setInput] = useState<IFirebaseGroup>(emptyGroupObject);
   const [interests, setInterests] = useState<IFirebaseInterest[]>([]);
   const [users, setUsers] = useState<IUserListItem[]>([]);
+  const [errorMessages, setErrorMessages] =
+    useState<IErrorMessages>(emptyErrorMessages);
 
   const [resetForm, setResetForm] = useState(false);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     firebaseUsers.once('value', snapshot => {
@@ -56,11 +66,19 @@ const AddToList: React.FC = () => {
   };
 
   const handleClick = (): void => {
-    if (input.name === '') {
+    const updatedErrorMessages = validateGroupData(input);
+
+    if (updatedErrorMessages !== emptyErrorMessages) {
+      setErrorMessages(updatedErrorMessages);
+      setResetForm(!resetForm);
       return;
     }
 
-    firebaseGroups.push(input);
+    firebaseGroups.push(input).then(newReference => {
+      console.log(newReference.key);
+
+      navigate('/groups/' + newReference.key);
+    });
 
     setInput(emptyGroupObject);
 
@@ -70,16 +88,9 @@ const AddToList: React.FC = () => {
   return (
     <>
       <Grid container justifyContent="center" marginTop={5}>
-        <Grid
-          container
-          justifyContent="center"
-          marginBottom={2}
-          display={input.name === '' ? 'inherit' : 'none'}
-        >
-          <Alert severity="error" style={{width: 500}}>
-            Du må gi gruppen et navn
-          </Alert>
-        </Grid>
+        {errorMessages.name === '' ? null : (
+          <ContainedAlert message={errorMessages.name} />
+        )}
         <TextField
           style={{width: 500}}
           required
@@ -91,6 +102,9 @@ const AddToList: React.FC = () => {
         />
       </Grid>
       <Grid container justifyContent="center" marginTop={5}>
+        {errorMessages.description === '' ? null : (
+          <ContainedAlert message={errorMessages.description} />
+        )}
         <TextField
           style={{width: 500}}
           id="outlined-multiline-static"
@@ -104,6 +118,9 @@ const AddToList: React.FC = () => {
         />
       </Grid>
       <Grid container justifyContent="center" marginTop={5}>
+        {errorMessages.members === '' ? null : (
+          <ContainedAlert message={errorMessages.members} />
+        )}
         <Autocomplete
           key={'users' + resetForm}
           id="addUsers"
@@ -129,7 +146,10 @@ const AddToList: React.FC = () => {
           )}
         />
       </Grid>
-      <Grid container justifyContent="center" marginTop={5}>
+      <Grid container justifyContent="center" marginTop={5} marginBottom={5}>
+        {errorMessages.interests === '' ? null : (
+          <ContainedAlert message={errorMessages.interests} />
+        )}
         <Autocomplete
           key={'interests' + resetForm}
           id="addInterests"
@@ -148,7 +168,7 @@ const AddToList: React.FC = () => {
           )}
         />
       </Grid>
-      <Grid container justifyContent="center" marginTop={5} marginBottom={10}>
+      <Grid container justifyContent="center" marginTop={5} marginBottom={5}>
         <Button variant="contained" onClick={handleClick}>
           Legg til gruppe
         </Button>

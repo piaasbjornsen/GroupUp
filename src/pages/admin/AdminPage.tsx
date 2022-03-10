@@ -41,7 +41,7 @@ export default function AdminPage() {
         margin="0 auto"
       >
         {Object.entries(groupList).map(groupItemArray => (
-          <Grid key={groupItemArray[0]}>
+          <Grid key={groupItemArray[0]} sx={{maxWidth: 400}}>
             <Box
               sx={{bgcolor: '#96AB94', m: '2em', p: '1em', borderRadius: '5%'}}
             >
