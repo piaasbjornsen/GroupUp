@@ -1,4 +1,12 @@
-import {Grid, Button, CssBaseline, Typography} from '@mui/material';
+import {
+  Grid,
+  Button,
+  CssBaseline,
+  Typography,
+  Box,
+  Paper,
+  styled,
+} from '@mui/material';
 import TextField from '@mui/material/TextField';
 import Autocomplete from '@mui/material/Autocomplete';
 import React, {useContext, useEffect, useState} from 'react';
@@ -124,6 +132,13 @@ const AddToList: React.FC = () => {
     });
   };
 
+  const location = [
+    {label: 'Trondheim'},
+    {label: 'Oslo'},
+    {label: 'Bergen'},
+    {label: 'Stavanger'},
+  ];
+
   const handleClick = (): void => {
     if (urlParams?.groupId === '') {
       console.log('Invalid group');
@@ -156,100 +171,159 @@ const AddToList: React.FC = () => {
   };
 
   return (
-    <>
-      <>
-        <CssBaseline />
-        <Grid container justifyContent="center" marginTop={5}>
-          {' '}
-          {/* Overskriften på siden, hentet fra react */}
-          <GroupsIcon fontSize="large" />
-          <Typography variant="h4" marginLeft={2}>
-            {group?.name}
-          </Typography>
-        </Grid>
-      </>
-      <Grid container justifyContent="center" marginTop={3}>
-        <Link to={'/groups/' + urlParams.groupId + '/findgroups'}>
-          <Button variant={'contained'}>Finn andre grupper</Button>
-        </Link>
+    <Paper
+      sx={{
+        p: 2,
+        margin: 'auto',
+        maxWidth: 810,
+        flexGrow: 0,
+        backgroundColor: theme =>
+          theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
+      }}
+      elevation={0}
+    >
+      <Grid container spacing={2}>
+        <>
+          <>
+            <CssBaseline />
+            <Grid container justifyContent="center" marginTop={3}>
+              {' '}
+              {/* Overskriften på siden, hentet fra react */}
+              <GroupsIcon fontSize="large" />
+              <Typography variant="h5" marginLeft={2}>
+                {group?.name}
+              </Typography>
+            </Grid>
+          </>
+          <Grid container justifyContent="center" marginTop={2}>
+            <Link to={'/groups/' + urlParams.groupId + '/findgroups'}>
+              <Button variant={'contained'} size="small">
+                Finn andre grupper
+              </Button>
+            </Link>
+          </Grid>
+          <Grid item>
+            <Box
+              component="img"
+              sx={{
+                height: 500,
+                width: 500,
+                maxHeight: {xs: 500, md: 250},
+                maxWidth: {xs: 500, md: 250},
+              }}
+              alt="Student group."
+              src="https://img.freepik.com/free-vector/group-young-people-posing-photo_52683-18823.jpg?t=st=1646909401~exp=1646910001~hmac=5acffd8fef1d5ec0375a2eafc88b06e09115773e54ace3acb2f3e2dc3ea74ae6"
+            />
+          </Grid>
+          <Grid container justifyContent="right" marginTop={1} item xs>
+            {' '}
+            {/* Beskrivelsen */}
+            <TextField
+              style={{width: 500}}
+              id="outlined-multiline-static"
+              variant="standard"
+              label="Beskrivelse"
+              multiline
+              rows={4}
+              inputProps={{maxLength: 240}}
+              onChange={handleChange}
+              defaultValue={group?.description}
+              name="description"
+              InputLabelProps={{shrink: true}}
+              size="small"
+            />
+            <Grid container justifyContent="right" marginTop={2} item xs>
+              <Autocomplete
+                key={'users' + resetForm}
+                id="addUsers"
+                multiple
+                size="small"
+                freeSolo
+                style={{width: 500}}
+                onChange={(
+                  event: React.SyntheticEvent,
+                  value: (string | IUserListItem)[]
+                ) => {
+                  const userIds = value.map(userListItem =>
+                    typeof userListItem !== 'string'
+                      ? userListItem.id
+                      : userListItem
+                  );
+                  setInput({
+                    ...input,
+                    members: userIds,
+                  });
+                }}
+                defaultValue={group?.members.map(userId => {
+                  return (
+                    users.find(userItem => userItem.id === userId) ?? {
+                      id: '',
+                      name: 'Ugyldig bruker',
+                    }
+                  );
+                })}
+                options={users}
+                getOptionLabel={option => option.name}
+                renderInput={params => (
+                  <TextField {...params} label="Legg til medlemmer" />
+                )}
+              />
+            </Grid>
+            <Grid container justifyContent="right" marginTop={2} item xs>
+              <Autocomplete
+                key={'location' + resetForm}
+                id="addLocation"
+                multiple={true}
+                freeSolo
+                style={{width: 500}}
+                size="small"
+                onChange={(event: React.SyntheticEvent, value: string[]) => {
+                  setInput({
+                    ...input,
+                    interests: value,
+                  });
+                }}
+                defaultValue={group?.interests}
+                options={interests}
+                renderInput={params => (
+                  <TextField {...params} label="Legg til interesser" />
+                )}
+              />
+            </Grid>
+            <Grid container justifyContent="right" marginTop={2} item xs>
+              <Autocomplete
+                key={'interests' + resetForm}
+                id="addInterests"
+                multiple={true}
+                freeSolo
+                style={{width: 500}}
+                options={location}
+                size="small"
+                renderInput={params => (
+                  <TextField {...params} label="Legg til lokasjon" />
+                )}
+              />
+            </Grid>
+            <Grid container justifyContent="right" marginTop={2} item xs>
+              <TextField
+                style={{width: 500}}
+                id="outlined-multiline-static"
+                label="Gruppebilde"
+                rows={4}
+                inputProps={{maxLength: 240}}
+                onChange={handleChange}
+                size="small"
+              />
+            </Grid>
+          </Grid>
+        </>
       </Grid>
-      <Grid container justifyContent="center" marginTop={5}>
-        {' '}
-        {/* Beskrivelsen */}
-        <TextField
-          style={{width: 500}}
-          id="outlined-multiline-static"
-          variant="standard"
-          label="Beskrivelse"
-          multiline
-          rows={4}
-          inputProps={{maxLength: 240}}
-          onChange={handleChange}
-          defaultValue={group?.description}
-          name="description"
-          InputLabelProps={{shrink: true}}
-        />
-      </Grid>
-      <Grid container justifyContent="center" marginTop={5}>
-        <Autocomplete
-          key={'users' + resetForm}
-          id="addUsers"
-          multiple
-          freeSolo
-          style={{width: 500}}
-          onChange={(
-            event: React.SyntheticEvent,
-            value: (string | IUserListItem)[]
-          ) => {
-            const userIds = value.map(userListItem =>
-              typeof userListItem !== 'string' ? userListItem.id : userListItem
-            );
-            setInput({
-              ...input,
-              members: userIds,
-            });
-          }}
-          defaultValue={group?.members.map(userId => {
-            return (
-              users.find(userItem => userItem.id === userId) ?? {
-                id: '',
-                name: 'Ugyldig bruker',
-              }
-            );
-          })}
-          options={users}
-          getOptionLabel={option => option.name}
-          renderInput={params => (
-            <TextField {...params} label="Legg til medlemmer" />
-          )}
-        />
-      </Grid>
-      <Grid container justifyContent="center" marginTop={5}>
-        <Autocomplete
-          key={'interests' + resetForm}
-          id="addInterests"
-          multiple={true}
-          freeSolo
-          style={{width: 500}}
-          onChange={(event: React.SyntheticEvent, value: string[]) => {
-            setInput({
-              ...input,
-              interests: value,
-            });
-          }}
-          defaultValue={group?.interests}
-          options={interests}
-          renderInput={params => (
-            <TextField {...params} label="Legg til interesser" />
-          )}
-        />
-      </Grid>
-      <Grid container justifyContent="center" marginTop={5} marginBottom={10}>
+      <Grid container justifyContent="center" marginTop={3} marginBottom={5}>
         <Button variant="contained" onClick={handleClick}>
           Oppdater
         </Button>
       </Grid>
-    </>
+    </Paper>
   );
 };
 

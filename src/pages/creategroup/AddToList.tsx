@@ -25,11 +25,17 @@ const emptyGroupObject = {
   members: [],
 };
 
+const location = [
+  {label: 'Trondheim'},
+  {label: 'Oslo'},
+  {label: 'Bergen'},
+  {label: 'Stavanger'},
+];
+
 const AddToList: React.FC = () => {
   const [input, setInput] = useState<IFirebaseGroup>(emptyGroupObject);
   const [interests, setInterests] = useState<IFirebaseInterest[]>([]);
   const [users, setUsers] = useState<IUserListItem[]>([]);
-
   const [resetForm, setResetForm] = useState(false);
 
   useEffect(() => {
@@ -146,6 +152,31 @@ const AddToList: React.FC = () => {
           renderInput={params => (
             <TextField {...params} label="Legg til interesser" />
           )}
+        />
+      </Grid>
+      <Grid container justifyContent="center" marginTop={2}>
+        <Autocomplete
+          key={'interests' + resetForm}
+          id="addInterests"
+          multiple={true}
+          freeSolo
+          style={{width: 500}}
+          size="small"
+          options={location}
+          renderInput={params => (
+            <TextField {...params} label="Legg til lokasjon" />
+          )}
+        />
+      </Grid>
+      <Grid container justifyContent="center" marginTop={2}>
+        <TextField
+          style={{width: 500}}
+          id="outlined-multiline-static"
+          label="Gruppebilde"
+          rows={4}
+          inputProps={{maxLength: 240}}
+          onChange={handleChange}
+          size="small"
         />
       </Grid>
       <Grid container justifyContent="center" marginTop={5} marginBottom={10}>
