@@ -5,13 +5,17 @@ export interface IErrorMessages {
   description: string;
   members: string;
   interests: string;
+  location: string;
+  imageUrl: string;
 }
 
-export const emptyErrorMessages = {
+export const emptyErrorMessages: IErrorMessages = {
   name: '',
   description: '',
   members: '',
   interests: '',
+  location: '',
+  imageUrl: '',
 };
 
 export default (input: IFirebaseGroup): IErrorMessages => {
@@ -24,6 +28,12 @@ export default (input: IFirebaseGroup): IErrorMessages => {
   }
   if (input.interests.length === 0) {
     errorMessages.interests = 'Gruppen må ha interesser';
+  }
+  if ((input.location ?? '') === '') {
+    errorMessages.location = 'Du må gi gruppen en lokasjon';
+  }
+  if ((input.imageUrl ?? '') === '') {
+    errorMessages.imageUrl = 'Du må gi gruppen et bilde';
   }
   return errorMessages;
 };

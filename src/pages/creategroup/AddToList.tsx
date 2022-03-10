@@ -11,8 +11,6 @@ import {
   IFirebaseInterest,
   IFirebaseUserId,
   IFirebaseUserName,
-  IFirebaseLike,
-  IFirebaseMatch,
 } from '../../interfaces/firebase';
 import {useNavigate} from 'react-router-dom';
 import validateGroupData, {
@@ -22,30 +20,12 @@ import validateGroupData, {
 } from '../../utils/validateGroupData';
 import {ContainedAlert} from '../../features/containedalert/ContainedAlert';
 import {AuthContext} from '../../context/AuthContext';
+import {availableLocations, emptyGroupObject} from '../../utils/constants';
 
 interface IUserListItem {
   id: IFirebaseUserId;
   name: IFirebaseUserName;
 }
-
-const testlike: IFirebaseLike = {
-  id: '',
-  super: false,
-};
-
-const newmatch: IFirebaseMatch = {
-  id: '',
-  date: new Date().toLocaleString(),
-};
-
-const emptyGroupObject = {
-  name: '',
-  description: '',
-  interests: [],
-  members: [],
-  likes: [testlike],
-  matches: [newmatch],
-};
 
 const AddToList: React.FC = () => {
   const currentUser = useContext(AuthContext);
@@ -97,7 +77,6 @@ const AddToList: React.FC = () => {
 
     if (groupHasErrorMessages(updatedErrorMessages)) {
       setErrorMessages(updatedErrorMessages);
-      setResetForm(!resetForm);
       return;
     }
 
@@ -176,7 +155,7 @@ const AddToList: React.FC = () => {
           )}
         />
       </Grid>
-      <Grid container justifyContent="center" marginTop={2} marginBottom={1}>
+      <Grid container justifyContent="center" marginTop={2}>
         {errorMessages.interests === '' ? null : (
           <ContainedAlert message={errorMessages.interests} />
         )}
@@ -199,7 +178,45 @@ const AddToList: React.FC = () => {
           )}
         />
       </Grid>
-      <Grid container justifyContent="center" marginTop={1} marginBottom={5}>
+      <Grid container justifyContent="center" marginTop={2}>
+        {errorMessages.location === '' ? null : (
+          <ContainedAlert message={errorMessages.location} />
+        )}
+        <Autocomplete
+          key={'location' + resetForm}
+          id="addLocation"
+          multiple={false}
+          freeSolo
+          style={{width: 500}}
+          size="small"
+          options={availableLocations}
+          renderInput={params => (
+            <TextField {...params} label="Legg til lokasjon" />
+          )}
+          onChange={(event: React.SyntheticEvent, value: string | null) => {
+            setInput({
+              ...input,
+              location: value ?? '',
+            });
+          }}
+        />
+      </Grid>
+      <Grid container justifyContent="center" marginTop={2} marginBottom={1}>
+        {errorMessages.imageUrl === '' ? null : (
+          <ContainedAlert message={errorMessages.imageUrl} />
+        )}
+        <TextField
+          style={{width: 500}}
+          id="outlined-multiline-static"
+          label="Gruppebilde"
+          rows={4}
+          inputProps={{maxLength: 240}}
+          onChange={handleChange}
+          size="small"
+          name="imageUrl"
+        />
+      </Grid>
+      <Grid container justifyContent="center" marginTop={2} marginBottom={10}>
         <Button variant="contained" onClick={handleClick}>
           Legg til gruppe
         </Button>

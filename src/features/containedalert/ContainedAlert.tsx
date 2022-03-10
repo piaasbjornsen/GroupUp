@@ -9,7 +9,7 @@ interface ContainedAlertProps {
 export const ContainedAlert: React.FC<ContainedAlertProps> = (
   props: ContainedAlertProps
 ) => (
-  <Grid container justifyContent="center" marginBottom={2}>
+  <Grid container justifyContent="center" marginBottom={0.5}>
     <Alert severity={props.severity ?? 'error'} style={{width: 500}}>
       {props.message}
     </Alert>

@@ -34,6 +34,7 @@ export default function MyGroups() {
       direction="column"
       alignItems="center"
       justifyContent="center"
+      marginBottom={10}
     >
       <GroupsIcon
         style={{fontSize: '400%', color: '#6E8B6B'}}

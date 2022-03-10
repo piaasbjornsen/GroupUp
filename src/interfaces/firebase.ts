@@ -10,6 +10,8 @@ export interface IFirebaseGroup {
   description: string;
   interests: IFirebaseInterestId[];
   members: IFirebaseUserId[];
+  location: string;
+  imageUrl: string;
   likes: IFirebaseLike[];
   matches: IFirebaseMatch[];
 }
