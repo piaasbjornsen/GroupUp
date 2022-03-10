@@ -1,7 +1,7 @@
-import {Grid, Button, Alert} from '@mui/material';
+import {Grid, Button} from '@mui/material';
 import TextField from '@mui/material/TextField';
 import Autocomplete from '@mui/material/Autocomplete';
-import React, {useEffect, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {groups as firebaseGroups} from '../../service/firebase';
 import {interests as firebaseInterests} from '../../service/firebase';
 import {users as firebaseUsers} from '../../service/firebase';
@@ -15,9 +15,11 @@ import {
 import {useNavigate} from 'react-router-dom';
 import validateGroupData, {
   emptyErrorMessages,
+  groupHasErrorMessages,
   IErrorMessages,
 } from '../../utils/validateGroupData';
 import {ContainedAlert} from '../../features/containedalert/ContainedAlert';
+import {AuthContext} from '../../context/AuthContext';
 
 interface IUserListItem {
   id: IFirebaseUserId;
@@ -32,6 +34,8 @@ const emptyGroupObject = {
 };
 
 const AddToList: React.FC = () => {
+  const currentUser = useContext(AuthContext);
+
   const [input, setInput] = useState<IFirebaseGroup>(emptyGroupObject);
   const [interests, setInterests] = useState<IFirebaseInterest[]>([]);
   const [users, setUsers] = useState<IUserListItem[]>([]);
@@ -66,9 +70,18 @@ const AddToList: React.FC = () => {
   };
 
   const handleClick = (): void => {
+    // Add current user to the group
+    if (
+      !input.members.includes(currentUser?.uid ?? '') &&
+      currentUser !== null
+    ) {
+      input.members.push(currentUser?.uid);
+      console.log('Added user to group');
+    }
+
     const updatedErrorMessages = validateGroupData(input);
 
-    if (updatedErrorMessages !== emptyErrorMessages) {
+    if (groupHasErrorMessages(updatedErrorMessages)) {
       setErrorMessages(updatedErrorMessages);
       setResetForm(!resetForm);
       return;
@@ -87,13 +100,14 @@ const AddToList: React.FC = () => {
 
   return (
     <>
-      <Grid container justifyContent="center" marginTop={5}>
+      <Grid container justifyContent="center" marginTop={2}>
         {errorMessages.name === '' ? null : (
           <ContainedAlert message={errorMessages.name} />
         )}
         <TextField
           style={{width: 500}}
           required
+          size="small"
           id="outlined-required"
           label="Gruppenavn"
           onChange={handleChange}
@@ -101,12 +115,13 @@ const AddToList: React.FC = () => {
           name="name"
         />
       </Grid>
-      <Grid container justifyContent="center" marginTop={5}>
+      <Grid container justifyContent="center" marginTop={2}>
         {errorMessages.description === '' ? null : (
           <ContainedAlert message={errorMessages.description} />
         )}
         <TextField
           style={{width: 500}}
+          size="small"
           id="outlined-multiline-static"
           label="Beskrivelse"
           multiline
@@ -117,13 +132,14 @@ const AddToList: React.FC = () => {
           name="description"
         />
       </Grid>
-      <Grid container justifyContent="center" marginTop={5}>
+      <Grid container justifyContent="center" marginTop={2}>
         {errorMessages.members === '' ? null : (
           <ContainedAlert message={errorMessages.members} />
         )}
         <Autocomplete
           key={'users' + resetForm}
           id="addUsers"
+          size="small"
           multiple
           freeSolo
           style={{width: 500}}
@@ -146,13 +162,14 @@ const AddToList: React.FC = () => {
           )}
         />
       </Grid>
-      <Grid container justifyContent="center" marginTop={5} marginBottom={5}>
+      <Grid container justifyContent="center" marginTop={2} marginBottom={1}>
         {errorMessages.interests === '' ? null : (
           <ContainedAlert message={errorMessages.interests} />
         )}
         <Autocomplete
           key={'interests' + resetForm}
           id="addInterests"
+          size="small"
           multiple={true}
           freeSolo
           style={{width: 500}}
@@ -168,7 +185,7 @@ const AddToList: React.FC = () => {
           )}
         />
       </Grid>
-      <Grid container justifyContent="center" marginTop={5} marginBottom={5}>
+      <Grid container justifyContent="center" marginTop={1} marginBottom={5}>
         <Button variant="contained" onClick={handleClick}>
           Legg til gruppe
         </Button>

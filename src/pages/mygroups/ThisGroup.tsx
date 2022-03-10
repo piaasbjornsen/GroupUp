@@ -37,6 +37,8 @@ const emptyGroupObject = {
 };
 
 const AddToList: React.FC = () => {
+  const currentUser = useContext(AuthContext);
+
   const [input, setInput] = useState<IFirebaseGroup>(emptyGroupObject);
   const [interests, setInterests] = useState<IFirebaseInterest[]>([]);
   const [users, setUsers] = useState<IUserListItem[]>([]);
@@ -90,6 +92,15 @@ const AddToList: React.FC = () => {
     return <ContainedAlert severity="info" message="Laster inn..." />;
   }
 
+  if (currentUser === null || !group.members.includes(currentUser?.uid)) {
+    return (
+      <ContainedAlert
+        severity="error"
+        message="Du må være med i gruppen for å kunne se denne siden."
+      />
+    );
+  }
+
   if (!group.members?.includes(user?.uid ?? '')) {
     return (
       <>
@@ -140,9 +151,12 @@ const AddToList: React.FC = () => {
   };
 
   const handleClick = (): void => {
-    if (urlParams?.groupId === '') {
-      console.log('Invalid group');
-      return;
+    // Add current user to the group
+    if (
+      !input.members.includes(currentUser?.uid ?? '') &&
+      currentUser !== null
+    ) {
+      input.members.push(currentUser?.uid);
     }
 
     // Clear error messages
@@ -234,14 +248,16 @@ const AddToList: React.FC = () => {
               members: userIds,
             });
           }}
-          defaultValue={group?.members.map(userId => {
-            return (
-              users.find(userItem => userItem.id === userId) ?? {
-                id: '',
-                name: 'Ugyldig bruker',
-              }
-            );
-          })}
+          defaultValue={group?.members
+            .filter(userId => userId !== currentUser?.uid)
+            .map(userId => {
+              return (
+                users.find(userItem => userItem.id === userId) ?? {
+                  id: '',
+                  name: 'Ugyldig bruker',
+                }
+              );
+            })}
           options={users}
           getOptionLabel={option => option.name}
           renderInput={params => (
