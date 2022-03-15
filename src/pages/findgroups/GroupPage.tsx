@@ -1,5 +1,5 @@
 import {Grid, CssBaseline, Typography, Button, Box} from '@mui/material';
-import React, {useEffect, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {groups as firebaseGroups} from '../../service/firebase';
 import {users as firebaseUsers} from '../../service/firebase';
 import GroupsIcon from '@mui/icons-material/Groups';
@@ -18,6 +18,7 @@ import {
 } from '../../interfaces/firebase';
 import {useParams} from 'react-router-dom';
 import {emptyGroupObject} from '../../utils/constants';
+import {AuthContext} from '../../context/AuthContext';
 
 //Bruker i liste
 interface IUserListItem {
@@ -26,11 +27,12 @@ interface IUserListItem {
 }
 
 export default function groupPage() {
+  const currentUser = useContext(AuthContext);
+
   const [groupTo, setGroupTo] = useState<IFirebaseGroup>(emptyGroupObject);
   const [groupFrom, setGroupFrom] = useState<IFirebaseGroup>(emptyGroupObject);
   const urlParams = useParams();
   const [isMatch, setIsMatch] = useState<boolean>();
-  const [isGold] = useState<boolean>(true);
   const [match, setMatch] = useState<IFirebaseMatch | null>();
   const groupIdTo = urlParams.groupIdTo ? urlParams.groupIdTo : '';
   const groupIdFrom = urlParams.groupIdFrom ? urlParams.groupIdFrom : '';
@@ -210,7 +212,7 @@ export default function groupPage() {
                   </Button>
                 )}
               </Grid>
-              {isGold ? (
+              {currentUser?.gold ?? false ? (
                 <Grid marginLeft={2}>
                   {isSuperLiked ? (
                     <Button
@@ -218,7 +220,7 @@ export default function groupPage() {
                       onClick={() => handleClickUnLike(true)}
                     >
                       <Grid container justifyContent="space-around">
-                        Un super like
+                        Fjern super-like
                         <StarIcon sx={{ml: 1}}></StarIcon>
                       </Grid>
                     </Button>
@@ -252,6 +254,42 @@ export default function groupPage() {
           )}
         </Grid>
       </>
+      {[
+        groupFrom.likes
+          ?.filter(
+            like =>
+              like.id === groupIdTo &&
+              ((currentUser?.gold ?? false) === true || like.super === true)
+          )
+          ?.sort(like => (like.super === true ? -1 : 1))[0] ?? null,
+      ].map(like =>
+        like === null ? null : (
+          <Grid
+            marginLeft={29}
+            marginTop={2}
+            container
+            direction={'row'}
+            key={like.id}
+          >
+            <Typography
+              variant="body1"
+              style={{width: '100%'}}
+              marginBottom={1}
+            >
+              {groupFrom.name} har blitt {like.super ? 'super-liket' : 'liket'}{' '}
+              av {groupTo.name}
+            </Typography>
+            <Button
+              variant={'contained'}
+              onClick={() => handleClickLike(false)}
+            >
+              <Grid container justifyContent="space-around">
+                Godta
+              </Grid>
+            </Button>
+          </Grid>
+        )
+      )}
       <Grid marginLeft={29} container direction={'row'} marginTop={3}>
         <Grid sx={{mr: 3}}>
           <Grid item>
