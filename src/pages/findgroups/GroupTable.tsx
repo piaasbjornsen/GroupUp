@@ -229,14 +229,13 @@ export default function EnhancedTable() {
   const [rows, setRows] = useState<Data[]>([]);
   const navigate = useNavigate();
   const urlParams = useParams();
+  const groupFrom = urlParams.groupId ? urlParams.groupId : '';
 
   useEffect(() => {
     firebaseGroups.once('value', snapshot => {
       const groups: IFirebaseGroups = snapshot.val();
       const groupArray = Object.entries(groups)
-        .filter(
-          (group: [string, IFirebaseGroup]) => group[0] !== urlParams.groupId
-        )
+        .filter((group: [string, IFirebaseGroup]) => group[0] !== groupFrom)
         .map((group: [string, IFirebaseGroup]) => {
           return {
             key: group[0],
@@ -274,8 +273,12 @@ export default function EnhancedTable() {
     setRows(groups.filter(row => checkInterest(row, interests)));
   };
 
-  const handleClick = (event: React.MouseEvent<unknown>, groupKey: string) => {
-    navigate('/groups/' + groupKey);
+  const handleClick = (
+    event: React.MouseEvent<unknown>,
+    groupFrom: string,
+    groupTo: string
+  ) => {
+    navigate('/grouppage/' + groupFrom + '/' + groupTo);
   };
 
   const handleChangePage = (event: unknown, newPage: number) => {
@@ -319,7 +322,9 @@ export default function EnhancedTable() {
                     return (
                       <TableRow
                         hover
-                        onClick={event => handleClick(event, row.key)}
+                        onClick={event =>
+                          handleClick(event, groupFrom, row.key)
+                        }
                         role="checkbox"
                         tabIndex={-1}
                         key={row.key}

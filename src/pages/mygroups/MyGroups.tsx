@@ -19,7 +19,6 @@ export default function MyGroups() {
       Object.keys(groups).forEach(groupKey => {
         if (!groups[groupKey].members?.includes(user?.uid ?? '')) {
           // Remove groups that the user is not a member of
-          console.log(groups[groupKey]);
           delete groups[groupKey];
         }
       });

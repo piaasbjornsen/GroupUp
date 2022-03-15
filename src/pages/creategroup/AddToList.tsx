@@ -11,6 +11,8 @@ import {
   IFirebaseInterest,
   IFirebaseUserId,
   IFirebaseUserName,
+  IFirebaseLike,
+  IFirebaseMatch,
 } from '../../interfaces/firebase';
 
 interface IUserListItem {
@@ -18,15 +20,27 @@ interface IUserListItem {
   name: IFirebaseUserName;
 }
 
-const emptyGroupObject = {
+const emptyMatch: IFirebaseMatch = {
+  id: '',
+  date: new Date().toLocaleString(),
+};
+
+const emptyLike: IFirebaseLike = {
+  id: '',
+  super: false,
+};
+
+const emptyGroup = {
   name: '',
   description: '',
   interests: [],
   members: [],
+  likes: [emptyLike],
+  matches: [emptyMatch],
 };
 
 const AddToList: React.FC = () => {
-  const [input, setInput] = useState<IFirebaseGroup>(emptyGroupObject);
+  const [input, setInput] = useState<IFirebaseGroup>(emptyGroup);
   const [interests, setInterests] = useState<IFirebaseInterest[]>([]);
   const [users, setUsers] = useState<IUserListItem[]>([]);
 
@@ -62,7 +76,7 @@ const AddToList: React.FC = () => {
 
     firebaseGroups.push(input);
 
-    setInput(emptyGroupObject);
+    setInput(emptyGroup);
 
     setResetForm(!resetForm);
   };

@@ -12,6 +12,8 @@ import {
   IFirebaseInterest,
   IFirebaseUserId,
   IFirebaseUserName,
+  IFirebaseLike,
+  IFirebaseMatch,
 } from '../../interfaces/firebase';
 import {Link, useParams} from 'react-router-dom';
 import {AuthContext} from '../../context/AuthContext';
@@ -22,16 +24,28 @@ interface IUserListItem {
   name: IFirebaseUserName;
 }
 
+const emptyMatch: IFirebaseMatch = {
+  id: '',
+  date: new Date().toLocaleString(),
+};
+
+const emptyLike: IFirebaseLike = {
+  id: '',
+  super: false,
+};
+
 //Gruppeobjekt
-const emptyGroupObject = {
+const emptyGroup = {
   name: '',
   description: '',
   interests: [],
   members: [],
+  likes: [emptyLike],
+  matches: [emptyMatch],
 };
 
 const AddToList: React.FC = () => {
-  const [input, setInput] = useState<IFirebaseGroup>(emptyGroupObject);
+  const [input, setInput] = useState<IFirebaseGroup>(emptyGroup);
   const [interests, setInterests] = useState<IFirebaseInterest[]>([]);
   const [users, setUsers] = useState<IUserListItem[]>([]);
   const [group, setGroup] = useState<IFirebaseGroup | null>(null);
