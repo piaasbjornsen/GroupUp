@@ -19,9 +19,9 @@ import {
   IFirebaseDb,
   IFirebaseGroup,
   IFirebaseInterest,
+  IFirebaseMatch,
   IFirebaseUserId,
   IFirebaseUserName,
-  IFirebaseMatch,
 } from '../../interfaces/firebase';
 import {Link, useNavigate, useParams} from 'react-router-dom';
 import {AuthContext} from '../../context/AuthContext';
@@ -431,8 +431,8 @@ const AddToList: React.FC = () => {
           alignItems="stretch"
           sx={{width: {sx: 1, sm: '70%'}}}
         >
-          {matchedGroups.map(group => (
-            <Grid item key={group.id} xs>
+          {matchedGroups.map(matchedGroup => (
+            <Grid item key={matchedGroup.id} xs>
               <Card
                 sx={{
                   maxWidth: 245,
@@ -440,15 +440,17 @@ const AddToList: React.FC = () => {
                   cursor: 'pointer',
                 }}
                 onClick={() => {
-                  navigate('/groups/' + group.id);
+                  navigate(
+                    '/grouppage/' + urlParams.groupId + '/' + matchedGroup.id
+                  );
                 }}
               >
                 <CardContent>
                   <Typography variant="h5" component="div">
-                    {group.name}
+                    {matchedGroup.name}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    {group.description}
+                    {matchedGroup.description}
                   </Typography>
                   <Typography
                     variant="body2"
@@ -459,7 +461,7 @@ const AddToList: React.FC = () => {
                     Matchdato:
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    {group.date}
+                    {matchedGroup.date}
                   </Typography>
                 </CardContent>
               </Card>

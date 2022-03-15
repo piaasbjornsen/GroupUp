@@ -12,6 +12,7 @@ import AdminPage from './pages/admin/AdminPage';
 import CreateGroup from './pages/creategroup/CreateGroup';
 import GroupTable from './pages/findgroups/GroupTable';
 import ThisGroup from './pages/mygroups/ThisGroup';
+import GroupPage from './pages/findgroups/GroupPage';
 
 function App() {
   const user = useContext(AuthContext);
@@ -29,6 +30,10 @@ function App() {
               <Route path="/admin" element={<AdminPage />}></Route>
               <Route path="/creategroup" element={<CreateGroup />}></Route>
               <Route path="/groups/:groupId" element={<ThisGroup />}></Route>
+              <Route
+                path="/grouppage/:groupIdFrom/:groupIdTo"
+                element={<GroupPage />}
+              ></Route>
               <Route
                 path="/groups/:groupId/findgroups"
                 element={<GroupTable />}
