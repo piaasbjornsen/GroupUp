@@ -26,6 +26,9 @@ export default (input: IFirebaseUser): IErrorMessages => {
   if (input.gold === null) {
     errorMessages.gold = 'Du må velge gold eller ikke';
   }
+  if (input.dateOfBirth === undefined) {
+    errorMessages.dateOfBirth = 'Du må fylle inn fødselsdato';
+  }
   return errorMessages;
 };
 

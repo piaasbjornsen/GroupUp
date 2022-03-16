@@ -4,12 +4,23 @@ import firebase from 'firebase/app';
 import {auth} from '../service/firebase';
 import PropTypes from 'prop-types';
 import {users as firebaseUsers} from '../service/firebase';
-import {Users} from '../interfaces/groups';
 import {ICurrentUser} from '../interfaces/users';
-import {IFirebaseUser} from '../interfaces/firebase';
+import {IFirebaseUser, IFirebaseUsers} from '../interfaces/firebase';
 
 export const AuthProvider: React.FC = ({children}) => {
-  const [user, setUser] = useState<ICurrentUser | null>(null);
+  const updateUser = () => {
+    console.log('Refetching...');
+    firebaseUsers.once('value', snapshot => {
+      console.log('Stuff has been fetched');
+      fetchAndAppendUserData(snapshot, null);
+    });
+  };
+
+  const [user, setUser] = useState<{
+    currentUser: ICurrentUser | null;
+    loading: boolean;
+    refetchUser: () => void;
+  }>({currentUser: null, loading: true, refetchUser: updateUser});
 
   const fetchAndAppendUserData = (
     snapshot: firebase.database.DataSnapshot,
@@ -17,38 +28,53 @@ export const AuthProvider: React.FC = ({children}) => {
   ) => {
     let firebaseUser: firebase.User;
     if (inputFirebaseUser === null) {
-      if (user === null) {
+      if (user.currentUser === null) {
         return;
       } else {
-        firebaseUser = user;
+        firebaseUser = user.currentUser;
       }
     } else {
       firebaseUser = inputFirebaseUser;
     }
-    const users: Users = snapshot.val();
+    const users: IFirebaseUsers = snapshot.val();
     if (firebaseUser.uid in users) {
+      const fetchedCurrentUser = {...firebaseUser, ...users[firebaseUser.uid]};
       // Fetch userdata and append it
-      setUser({...firebaseUser, ...users[firebaseUser.uid]});
+      setUser({
+        currentUser: fetchedCurrentUser,
+        loading: false,
+        refetchUser: updateUser,
+      });
       return;
     }
     // Generate userdata
     const defaultContent: IFirebaseUser = {
       name: firebaseUser.email ?? '',
       admin: false,
+      email: firebaseUser.email ?? '',
+      dateOfBirth: '',
     };
     // Save the user to the database
     firebaseUsers
       .child(firebaseUser.uid)
       .set(defaultContent)
       .then(() => {
-        setUser({...firebaseUser, ...defaultContent});
+        setUser({
+          currentUser: {...firebaseUser, ...defaultContent},
+          loading: false,
+          refetchUser: updateUser,
+        });
       });
   };
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(firebaseUser => {
       if (firebaseUser === null) {
-        setUser(firebaseUser);
+        setUser({
+          currentUser: firebaseUser,
+          loading: false,
+          refetchUser: updateUser,
+        });
         return;
       }
       // Fetch extra data about the user

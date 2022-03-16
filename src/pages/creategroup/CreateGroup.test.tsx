@@ -1,7 +1,8 @@
 import React from 'react';
-import {render, screen} from '@testing-library/react';
+import {screen} from '@testing-library/react';
 import CreateGroup from './CreateGroup';
 import {MemoryRouter} from 'react-router-dom';
+import {render} from '../../utils/test-utils';
 
 test('renders main create group components', () => {
   render(
@@ -13,7 +14,7 @@ test('renders main create group components', () => {
     'Opprett gruppe',
     'Gruppenavn',
     'Beskrivelse',
-    'Legg til medlemmer',
+    'Inviter medlemmer',
     'Legg til interesser',
   ];
   expectedTexts.forEach(text => {

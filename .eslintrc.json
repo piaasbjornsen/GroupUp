@@ -1,8 +1,5 @@
 {
-  "extends": [
-    "./node_modules/gts/",
-    "plugin:react/recommended"
-  ],
+  "extends": ["./node_modules/gts/", "plugin:react/recommended"],
   "env": {
     "browser": true,
     "jest": true

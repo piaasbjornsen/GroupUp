@@ -5,8 +5,9 @@ import {
   Typography,
   Card,
   CardContent,
-  Box,
   Paper,
+  CardMedia,
+  CardActions,
 } from '@mui/material';
 import TextField from '@mui/material/TextField';
 import Autocomplete from '@mui/material/Autocomplete';
@@ -14,7 +15,6 @@ import React, {useContext, useEffect, useState} from 'react';
 import {groups as firebaseGroups} from '../../service/firebase';
 import {interests as firebaseInterests} from '../../service/firebase';
 import {users as firebaseUsers} from '../../service/firebase';
-import GroupsIcon from '@mui/icons-material/Groups';
 import {
   IFirebaseDb,
   IFirebaseGroup,
@@ -25,7 +25,7 @@ import {
   IFirebaseUserName,
   IFirebaseGroups,
 } from '../../interfaces/firebase';
-import {Link, useNavigate, useParams} from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
 import {AuthContext} from '../../context/AuthContext';
 import validateGroupData, {
   emptyErrorMessages,
@@ -38,6 +38,8 @@ import {
   defaultGroupImageUrl,
   emptyGroupObject,
 } from '../../utils/constants';
+import {useSelector} from 'react-redux';
+import {RootState} from '../../redux/store';
 
 //Bruker i liste
 interface IUserListItem {
@@ -52,7 +54,8 @@ interface ILikeListItem {
 }
 
 const AddToList: React.FC = () => {
-  const currentUser = useContext(AuthContext);
+  const {currentUser} = useContext(AuthContext);
+
   const [input, setInput] = useState<IFirebaseGroup>(emptyGroupObject);
   const [interests, setInterests] = useState<IFirebaseInterest[]>([]);
   const [users, setUsers] = useState<IUserListItem[]>([]);
@@ -65,19 +68,18 @@ const AddToList: React.FC = () => {
   const [updateSucceeded, setUpdateSucceeded] = useState(false);
   const [invalidGroupId, setInvalidGroupId] = useState(false);
   const [group, setGroup] = useState<IFirebaseGroup>(emptyGroupObject);
-  const urlParams = useParams();
-  const user = useContext(AuthContext);
   const navigate = useNavigate();
-  const groupID = urlParams.groupId ? urlParams.groupId : '';
   const [groups, setGroups] = useState<IFirebaseDb['groups']>();
   const [gold, setGold] = useState<boolean>(false);
+
+  const currentGroup = useSelector((state: RootState) => state.currentGroup);
 
   useEffect(() => {
     firebaseGroups.once('value', snapshot => {
       const groups: IFirebaseDb['groups'] = snapshot.val();
       setGroups(groups);
-      const thisGroup = groups[urlParams.groupId ?? ''];
-      if (groups[urlParams.groupId ?? ''] ?? false) {
+      const thisGroup = groups[currentGroup.groupId ?? ''];
+      if (groups[currentGroup.groupId ?? ''] ?? false) {
         setGroup(thisGroup);
         setInput(thisGroup);
 
@@ -112,7 +114,7 @@ const AddToList: React.FC = () => {
     });
 
     //Group
-    firebaseGroups.child(groupID).once('value', snapshot => {
+    firebaseGroups.child(currentGroup.groupId ?? '').once('value', snapshot => {
       const group = snapshot.val();
       if (typeof group.likes === 'undefined') {
         group.likes = [];
@@ -158,7 +160,7 @@ const AddToList: React.FC = () => {
     return <ContainedAlert severity="info" message="Laster inn..." />;
   }
 
-  if (!group.members?.includes(user?.uid ?? '')) {
+  if (!group.members?.includes(currentUser?.uid ?? '')) {
     return (
       <>
         <>
@@ -166,7 +168,6 @@ const AddToList: React.FC = () => {
           <Grid container justifyContent="center" marginTop={5}>
             {' '}
             {/* Overskriften på siden, hentet fra react */}
-            <GroupsIcon fontSize="large" />
             <Typography variant="h4" marginLeft={2}>
               {group?.name}
             </Typography>
@@ -253,7 +254,7 @@ const AddToList: React.FC = () => {
 
   const handleClickLike = (groupIdTo: string): void => {
     const like: IFirebaseLike = {
-      id: groupID,
+      id: currentGroup.groupId ?? '',
       super: false,
     };
 
@@ -279,7 +280,7 @@ const AddToList: React.FC = () => {
     }
 
     const matchTo: IFirebaseMatch = {
-      id: groupID,
+      id: currentGroup.groupId ?? '',
       date: new Date().toLocaleString(),
     };
     const matchFrom: IFirebaseMatch = {
@@ -291,16 +292,18 @@ const AddToList: React.FC = () => {
       firebaseGroups.child(groupIdTo + '/likes').set(groupTo.likes);
     } else {
       groupTo.likes = groupTo.likes.filter(
-        (like: IFirebaseLike) => like.id !== groupID
+        (like: IFirebaseLike) => like.id !== currentGroup.groupId
       );
       group.likes = group.likes.filter(
         (like: IFirebaseLike) => like.id !== groupIdTo
       );
       group.matches.push(matchFrom);
       groupTo.matches.push(matchTo);
-      firebaseGroups.child(groupID + '/matches').set(group.matches);
+      firebaseGroups
+        .child(currentGroup.groupId + '/matches')
+        .set(group.matches);
       firebaseGroups.child(groupIdTo + '/matches').set(groupTo.matches);
-      firebaseGroups.child(groupID + '/likes').set(group.likes);
+      firebaseGroups.child(currentGroup.groupId + '/likes').set(group.likes);
       firebaseGroups.child(groupIdTo + '/likes').set(groupTo.likes);
     }
     updateLists(group);
@@ -310,13 +313,13 @@ const AddToList: React.FC = () => {
     group.likes = group.likes.filter(
       (like: IFirebaseLike) => like.id !== groupIdTo || like.super
     );
-    firebaseGroups.child(groupID + '/likes').set(group.likes);
+    firebaseGroups.child(currentGroup.groupId + '/likes').set(group.likes);
   };
   const handleDeleteSuperLike = (groupIdTo: string): void => {
     group.likes = group.likes.filter(
       (like: IFirebaseLike) => like.id !== groupIdTo || !like.super
     );
-    firebaseGroups.child(groupID + '/likes').set(group.likes);
+    firebaseGroups.child(currentGroup.groupId + '/likes').set(group.likes);
     updateLists(group);
   };
 
@@ -346,7 +349,7 @@ const AddToList: React.FC = () => {
     setErrorMessages(emptyErrorMessages);
 
     firebaseGroups
-      .child(urlParams?.groupId ?? '')
+      .child(currentGroup.groupId ?? '')
       .update(updatedData)
       .then(() => {
         setUpdateSucceeded(true);
@@ -359,57 +362,53 @@ const AddToList: React.FC = () => {
   };
 
   return (
-    <Paper
-      sx={{
-        p: 2,
-        margin: 'auto',
-        maxWidth: 810,
-        flexGrow: 0,
-        backgroundColor: theme =>
-          theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
-      }}
-      elevation={0}
-    >
-      <Grid container spacing={2}>
-        <>
-          <>
-            <CssBaseline />
-            <Grid container justifyContent="center" marginTop={3}>
-              {' '}
-              {/* Overskriften på siden, hentet fra react */}
-              <GroupsIcon fontSize="large" />
-              <Typography variant="h5" marginLeft={2}>
-                {group?.name}
-              </Typography>
+    <>
+      <Grid
+        sx={{
+          width: '100%',
+          height: '300px',
+          backgroundImage:
+            'url(' +
+            ((input?.imageUrl ?? '') !== ''
+              ? input.imageUrl
+              : group.imageUrl ?? '/assets/background_image.jpg') +
+            ')',
+          backgroundPosition: 'center',
+          backgroundSize: 'cover',
+        }}
+      >
+        <Typography
+          variant="h4"
+          marginLeft={3}
+          paddingTop={3}
+          sx={{color: 'white'}}
+        >
+          {group?.name}
+        </Typography>
+      </Grid>
+      <Paper
+        sx={{
+          p: 2,
+          margin: 'auto',
+          width: {sx: 'default', sm: '80%'},
+          flexGrow: 0,
+          backgroundColor: theme =>
+            theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
+        }}
+        elevation={0}
+      >
+        <Grid container spacing={2} marginTop={1}>
+          <Grid
+            container
+            justifyContent="left"
+            item
+            sx={{width: 500}}
+            marginRight={5}
+          >
+            {/* VENSTRE SIDE */}
+            <Grid item xs={12} marginBottom={2}>
+              <Typography variant="h4">Rediger gruppeprofil</Typography>
             </Grid>
-          </>
-          <Grid container justifyContent="center" marginTop={2}>
-            <Link to={'/groups/' + urlParams.groupId + '/findgroups'}>
-              <Button variant={'contained'} size="small">
-                Finn andre grupper
-              </Button>
-            </Link>
-          </Grid>
-          <Grid item>
-            <Box
-              component="img"
-              sx={{
-                height: 500,
-                width: 500,
-                maxHeight: {xs: 500, md: 250},
-                maxWidth: {xs: 500, md: 250},
-              }}
-              alt="Student group."
-              src={
-                (input.imageUrl ?? '') !== ''
-                  ? input.imageUrl
-                  : (group.imageUrl ?? '') === ''
-                  ? defaultGroupImageUrl
-                  : group.imageUrl
-              }
-            />
-          </Grid>
-          <Grid container justifyContent="right" marginTop={1} item xs>
             {errorMessages.description === '' ? null : (
               <ContainedAlert message={errorMessages.description} />
             )}
@@ -428,7 +427,7 @@ const AddToList: React.FC = () => {
               InputLabelProps={{shrink: true}}
               size="small"
             />
-            <Grid container justifyContent="right" marginTop={2} item xs>
+            <Grid container marginTop={2} item xs>
               {errorMessages.members === '' ? null : (
                 <ContainedAlert message={errorMessages.members} />
               )}
@@ -466,11 +465,11 @@ const AddToList: React.FC = () => {
                 options={users}
                 getOptionLabel={option => option.name}
                 renderInput={params => (
-                  <TextField {...params} label="Legg til medlemmer" />
+                  <TextField {...params} label="Medlemmer" variant="standard" />
                 )}
               />
             </Grid>
-            <Grid container justifyContent="right" marginTop={2} item xs>
+            <Grid container marginTop={2} item xs>
               {errorMessages.interests === '' ? null : (
                 <ContainedAlert message={errorMessages.interests} />
               )}
@@ -490,11 +489,15 @@ const AddToList: React.FC = () => {
                 defaultValue={group?.interests}
                 options={interests}
                 renderInput={params => (
-                  <TextField {...params} label="Legg til interesser" />
+                  <TextField
+                    {...params}
+                    label="Interesser"
+                    variant="standard"
+                  />
                 )}
               />
             </Grid>
-            <Grid container justifyContent="right" marginTop={2} item xs>
+            <Grid container marginTop={2} item xs>
               {errorMessages.location === '' ? null : (
                 <ContainedAlert message={errorMessages.location} />
               )}
@@ -507,7 +510,7 @@ const AddToList: React.FC = () => {
                 options={availableLocations}
                 size="small"
                 renderInput={params => (
-                  <TextField {...params} label="Legg til lokasjon" />
+                  <TextField {...params} label="Lokasjon" variant="standard" />
                 )}
                 defaultValue={group.location}
                 onChange={(
@@ -521,14 +524,7 @@ const AddToList: React.FC = () => {
                 }}
               />
             </Grid>
-            <Grid
-              container
-              justifyContent="right"
-              marginTop={2}
-              marginBottom={1}
-              item
-              xs
-            >
+            <Grid container marginTop={2} marginBottom={1} item xs>
               {errorMessages.imageUrl === '' ? null : (
                 <ContainedAlert message={errorMessages.imageUrl} />
               )}
@@ -541,6 +537,7 @@ const AddToList: React.FC = () => {
                 inputProps={{maxLength: 240}}
                 onChange={handleChange}
                 size="small"
+                variant="standard"
                 defaultValue={group.imageUrl}
                 name="imageUrl"
               />
@@ -553,188 +550,183 @@ const AddToList: React.FC = () => {
             ) : null}
             <Grid
               container
-              justifyContent="center"
               marginTop={2}
               marginBottom={5}
+              justifyContent="center"
             >
-              <Button variant="contained" onClick={handleClick}>
-                Oppdater
+              <Button variant="outlined" onClick={handleClick}>
+                OPPDATER GRUPPE
               </Button>
             </Grid>
           </Grid>
-        </>
-      </Grid>
-      <Grid
-        container
-        spacing={0}
-        direction="column"
-        alignItems="center"
-        justifyContent="center"
-        marginBottom={10}
-      >
-        {superLikesGroups.length > 0 ? (
-          <Typography
-            variant="h4"
-            marginLeft={2}
-            marginTop={5}
-            marginBottom={5}
+          <Grid
+            container
+            item
+            direction={'column'}
+            sx={{width: 0, flexGrow: 1, verticalAlign: 'top'}}
           >
-            Superlikes
-          </Typography>
-        ) : (
-          <></>
-        )}
-        <Grid
-          container
-          spacing={5}
-          alignItems="stretch"
-          sx={{width: {sx: 1, sm: '70%'}}}
-        >
-          {superLikesGroups.length > 0 ? (
-            superLikesGroups.map((likesGroup: ILikeListItem) => (
-              <Grid item key={likesGroup.id} xs>
-                <Card
-                  sx={{
-                    maxWidth: 245,
-                    minWidth: {sx: 'default', sm: 200},
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => {
-                    navigate(
-                      '/grouppage/' + urlParams.groupId + '/' + likesGroup.id
-                    );
-                  }}
-                >
-                  <CardContent>
-                    <Typography variant="h5" component="div">
-                      {likesGroup.group.name}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {likesGroup.group.description}
-                    </Typography>
-                  </CardContent>
-                </Card>
-                <Button onClick={() => handleClickLike(likesGroup.id)}>
-                  Like
-                </Button>
-                <Button onClick={() => handleDeleteSuperLike(likesGroup.id)}>
-                  Slett
-                </Button>
-              </Grid>
-            ))
-          ) : (
-            <></>
-          )}
-        </Grid>
-        {likesGroups.length > 0 && gold ? (
-          <Typography
-            variant="h4"
-            marginLeft={2}
-            marginTop={5}
-            marginBottom={5}
-          >
-            Likes
-          </Typography>
-        ) : (
-          <></>
-        )}
-        <Grid
-          container
-          spacing={5}
-          alignItems="stretch"
-          sx={{width: {sx: 1, sm: '70%'}}}
-        >
-          {likesGroups.length > 0 && gold ? (
-            likesGroups.map((likesGroup: ILikeListItem) => (
-              <Grid item key={likesGroup.id} xs>
-                <Card
-                  sx={{
-                    maxWidth: 245,
-                    minWidth: {sx: 'default', sm: 200},
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => {
-                    navigate(
-                      '/grouppage/' + urlParams.groupId + '/' + likesGroup.id
-                    );
-                  }}
-                >
-                  <CardContent>
-                    <Typography variant="h5" component="div">
-                      {likesGroup.group.name}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {likesGroup.group.description}
-                    </Typography>
-                  </CardContent>
-                </Card>
-                <Button onClick={() => handleClickLike(likesGroup.id)}>
-                  Like
-                </Button>
-                <Button onClick={() => handleDeleteLike(likesGroup.id)}>
-                  Slett
-                </Button>
-              </Grid>
-            ))
-          ) : (
-            <></>
-          )}
-        </Grid>
-        <Grid
-          marginTop={5}
-          container
-          spacing={5}
-          alignItems="stretch"
-          sx={{width: {sx: 1, sm: '70%'}}}
-        ></Grid>
-        <Typography variant="h4" marginLeft={2} marginTop={5} marginBottom={5}>
-          Matchede grupper
-        </Typography>
-        <Grid
-          container
-          spacing={5}
-          alignItems="stretch"
-          sx={{width: {sx: 1, sm: '70%'}}}
-        >
-          {matchedGroups.map(matchedGroup => (
-            <Grid item key={matchedGroup.id} xs>
-              <Card
-                sx={{
-                  maxWidth: 245,
-                  minWidth: {sx: 'default', sm: 200},
-                  cursor: 'pointer',
-                }}
-                onClick={() => {
-                  navigate(
-                    '/grouppage/' + urlParams.groupId + '/' + matchedGroup.id
-                  );
-                }}
+            {/* HØYRE SIDE */}
+            {superLikesGroups.length > 0 ? (
+              <Typography variant="h4" marginBottom={1} sx={{width: '100%'}}>
+                Mottatte superlikes
+              </Typography>
+            ) : null}
+            {superLikesGroups.length > 0 ? (
+              <Grid
+                container
+                item
+                spacing={5}
+                sx={{width: {sx: 1}}}
+                marginBottom={2}
               >
-                <CardContent>
-                  <Typography variant="h5" component="div">
-                    {matchedGroup.name}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {matchedGroup.description}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    marginTop={2}
-                    marginBottom={1}
+                {superLikesGroups.map((likesGroup: ILikeListItem) => (
+                  <Grid item key={likesGroup.id} xs>
+                    <Card
+                      sx={{
+                        maxWidth: 245,
+                        minWidth: {sx: 'default', sm: 200},
+                        cursor: 'pointer',
+                      }}
+                      onClick={() => {
+                        navigate('/groups/' + likesGroup.id);
+                      }}
+                    >
+                      <CardContent>
+                        <Typography variant="h5" component="div">
+                          {likesGroup.group.name}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {likesGroup.group.description.length > 100
+                            ? likesGroup.group.description.substring(0, 97) +
+                              '...'
+                            : likesGroup.group.description}
+                        </Typography>
+                      </CardContent>
+                      <CardActions>
+                        <Button onClick={() => handleClickLike(likesGroup.id)}>
+                          Match
+                        </Button>
+                        <Button
+                          onClick={() => handleDeleteSuperLike(likesGroup.id)}
+                        >
+                          Slett
+                        </Button>
+                      </CardActions>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            ) : null}
+            {likesGroups.length > 0 && gold ? (
+              <Typography variant="h4" marginTop={1} marginBottom={1}>
+                Mottatte likes
+              </Typography>
+            ) : null}
+            {likesGroups.length > 0 && gold ? (
+              <Grid
+                container
+                spacing={5}
+                sx={{width: {sx: 1, sm: '70%'}}}
+                marginBottom={2}
+              >
+                {likesGroups.map((likesGroup: ILikeListItem) => (
+                  <Grid item key={likesGroup.id} xs>
+                    <Card
+                      sx={{
+                        maxWidth: 245,
+                        minWidth: {sx: 'default', sm: 200},
+                        cursor: 'pointer',
+                      }}
+                      onClick={() => {
+                        navigate('/groups/' + likesGroup.id);
+                      }}
+                    >
+                      <CardContent>
+                        <Typography variant="h5" component="div">
+                          {likesGroup.group.name}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {likesGroup.group.description.length > 100
+                            ? likesGroup.group.description.substring(0, 97) +
+                              '...'
+                            : likesGroup.group.description}
+                        </Typography>
+                      </CardContent>
+                      <CardActions>
+                        <Button onClick={() => handleClickLike(likesGroup.id)}>
+                          Like
+                        </Button>
+                        <Button onClick={() => handleDeleteLike(likesGroup.id)}>
+                          Slett
+                        </Button>
+                      </CardActions>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            ) : (
+              <></>
+            )}
+            <CssBaseline />
+            <Typography variant="h4" marginBottom={2}>
+              Matchede grupper
+            </Typography>
+            <Grid container item spacing={2}>
+              {matchedGroups.length === 0 ? (
+                <Typography variant="body2" marginTop={1}>
+                  Dere har ikke matchet med noen grupper..
+                  <br />
+                  Gå til <Link to="/groups/find">finn grupper</Link> og lik noen
+                  grupper for å komme i gang!
+                </Typography>
+              ) : null}
+              {matchedGroups.map(matchedGroup => (
+                <Grid item key={matchedGroup.id} xs>
+                  <Card
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      maxWidth: 245,
+                      minWidth: {sx: 'default', sm: 200},
+                      cursor: 'pointer',
+                      minHeight: '100%',
+                    }}
+                    onClick={() => {
+                      navigate('/groups/' + matchedGroup.id);
+                    }}
                   >
-                    Matchdato:
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {matchedGroup.date}
-                  </Typography>
-                </CardContent>
-              </Card>
+                    <CardMedia
+                      component="img"
+                      height="160"
+                      image={matchedGroup.imageUrl ?? defaultGroupImageUrl}
+                      alt="Gruppebilde"
+                    />
+                    <CardContent
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        flexGrow: 1,
+                      }}
+                    >
+                      <Typography
+                        variant="h5"
+                        component="div"
+                        sx={{flexGrow: 1, pb: 1}}
+                      >
+                        {matchedGroup.name}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Matchet {matchedGroup.date}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
             </Grid>
-          ))}
+          </Grid>
         </Grid>
-      </Grid>
-    </Paper>
+      </Paper>
+    </>
   );
 };
 

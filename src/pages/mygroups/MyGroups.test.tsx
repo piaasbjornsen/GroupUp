@@ -1,7 +1,8 @@
 import React from 'react';
-import {render, screen} from '@testing-library/react';
+import {screen} from '@testing-library/react';
 import MyGroups from './MyGroups';
 import {MemoryRouter} from 'react-router-dom';
+import {render} from '../../utils/test-utils';
 
 test('renders group list', () => {
   render(
@@ -9,8 +10,6 @@ test('renders group list', () => {
       <MyGroups />
     </MemoryRouter>
   );
-  const titleElement = screen.getByText(/Mine Grupper/i);
+  const titleElement = screen.getByText(/Laster inn bruker/i);
   expect(titleElement).toBeInTheDocument();
-  const buttonElement = screen.getByText(/Opprett gruppe/i);
-  expect(buttonElement).toBeInTheDocument();
 });

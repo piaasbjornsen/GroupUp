@@ -1,8 +1,7 @@
-import {Grid, CssBaseline, Typography, Button, Box} from '@mui/material';
+import {Grid, Typography, Button, Box} from '@mui/material';
 import React, {useContext, useEffect, useState} from 'react';
 import {groups as firebaseGroups} from '../../service/firebase';
 import {users as firebaseUsers} from '../../service/firebase';
-import GroupsIcon from '@mui/icons-material/Groups';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
@@ -23,6 +22,8 @@ import {
 import {useParams} from 'react-router-dom';
 import {emptyGroupObject} from '../../utils/constants';
 import {AuthContext} from '../../context/AuthContext';
+import {useSelector} from 'react-redux';
+import {RootState} from '../../redux/store';
 
 //Bruker i liste
 interface IUserListItem {
@@ -31,7 +32,8 @@ interface IUserListItem {
 }
 
 export default function groupPage() {
-  const currentUser = useContext(AuthContext);
+  const {currentUser} = useContext(AuthContext);
+  const currentGroup = useSelector((state: RootState) => state.currentGroup);
 
   const [groupTo, setGroupTo] = useState<IFirebaseGroup>(emptyGroupObject);
   const [groupFrom, setGroupFrom] = useState<IFirebaseGroup>(emptyGroupObject);
@@ -39,7 +41,7 @@ export default function groupPage() {
   const [isMatch, setIsMatch] = useState<boolean>();
   const [match, setMatch] = useState<IFirebaseMatch | null>();
   const groupIdTo = urlParams.groupIdTo ? urlParams.groupIdTo : '';
-  const groupIdFrom = urlParams.groupIdFrom ? urlParams.groupIdFrom : '';
+  const groupIdFrom = currentGroup.groupId ?? '';
   const [isLiked, setIsLiked] = useState<boolean>();
   const [isSuperLiked, setIsSuperLiked] = useState<boolean>();
   const [users, setUsers] = useState<IUserListItem[]>([]);
@@ -47,10 +49,11 @@ export default function groupPage() {
   const [rating, setRating] = React.useState<number | null>(0);
   const [canRate, setCanRate] = React.useState<boolean>(true);
   const [isRated, setIsRated] = React.useState<boolean>(false);
-  const user = useContext(AuthContext);
-  const userID = user ? user.uid : '';
+  const userID = currentUser ? currentUser.uid : '';
   const [groupRating, setGroupRating] = React.useState<number>(0);
-  const ratingText: string = canRate ? 'Gi rating:' : 'Din rating:';
+  const ratingText: string = canRate
+    ? 'Gi rating av gruppa:'
+    : 'Din rating av gruppa:';
 
   useEffect(() => {
     //groupTO
@@ -245,156 +248,190 @@ export default function groupPage() {
   }
   return (
     <>
-      <>
-        <CssBaseline />
-        <Grid marginLeft={30} container direction={'row'} marginTop={2}>
-          <GroupsIcon fontSize="large" />
-          <Typography variant="h4" marginLeft={3}>
-            {groupTo?.name}
-          </Typography>
-          {!isMatch ? (
-            <>
-              <Grid marginLeft={3}>
-                {isLiked ? (
-                  <Button
-                    variant={'contained'}
-                    onClick={() => handleClickUnLike(false)}
-                  >
-                    <Grid container justifyContent="space-around">
-                      unlike
-                      <FavoriteIcon sx={{ml: 1}}></FavoriteIcon>
-                    </Grid>
-                  </Button>
-                ) : (
-                  <Button
-                    variant={'contained'}
-                    onClick={() => handleClickLike(false)}
-                  >
-                    <Grid container justifyContent="space-around">
-                      Like
-                      <FavoriteBorderIcon sx={{ml: 1}}></FavoriteBorderIcon>
-                    </Grid>
-                  </Button>
-                )}
-              </Grid>
-              {gold ? (
-                <Grid marginLeft={2}>
-                  {isSuperLiked ? (
+      <Grid
+        sx={{
+          width: '100%',
+          height: '300px',
+          backgroundImage:
+            'url(' + (groupTo.imageUrl ?? '/assets/background_image.jpg') + ')',
+          backgroundPosition: 'center',
+          backgroundSize: 'cover',
+        }}
+      >
+        <Typography
+          variant="h4"
+          marginLeft={3}
+          paddingTop={3}
+          sx={{color: 'white'}}
+        >
+          {groupTo?.name}
+        </Typography>
+      </Grid>
+      <Grid
+        container
+        item
+        direction={'row'}
+        sx={{width: '80%', margin: '0 auto'}}
+      >
+        {/** LIKE / SUPERLIKE */}
+        {groupFrom.likes?.filter(
+          like =>
+            like.id === groupIdTo && (gold === true || like.super === true)
+        ).length === 0 ? (
+          <Grid
+            container
+            item
+            direction={'row'}
+            marginTop={3}
+            justifyContent="center"
+          >
+            {!isMatch ? (
+              <>
+                <Grid>
+                  {isLiked ? (
                     <Button
-                      variant={'contained'}
-                      onClick={() => handleClickUnLike(true)}
+                      variant={'outlined'}
+                      onClick={() => handleClickUnLike(false)}
                     >
                       <Grid container justifyContent="space-around">
-                        Fjern super-like
-                        <StarIcon sx={{ml: 1}}></StarIcon>
+                        unlike
+                        <FavoriteIcon sx={{ml: 1}}></FavoriteIcon>
                       </Grid>
                     </Button>
                   ) : (
                     <Button
-                      variant={'contained'}
-                      onClick={() => handleClickLike(true)}
+                      variant={'outlined'}
+                      onClick={() => handleClickLike(false)}
                     >
-                      <Grid container justifyContent="space-around">
-                        Super like
-                        <StarBorderIcon sx={{ml: 1}}></StarBorderIcon>
-                      </Grid>
+                      Like
+                      <FavoriteBorderIcon sx={{ml: 1}}></FavoriteBorderIcon>
                     </Button>
                   )}
                 </Grid>
-              ) : (
-                <></>
-              )}
-            </>
-          ) : (
-            <>
-              <Grid marginLeft={3}>
-                <Button variant={'contained'} onClick={handleClickUnMatch}>
-                  <Grid container justifyContent="space-around">
-                    Unmatch
-                    <CloseIcon sx={{ml: 1}}></CloseIcon>
+                {gold ? (
+                  <Grid sx={{ml: 2}}>
+                    {isSuperLiked ? (
+                      <Button
+                        variant={'outlined'}
+                        onClick={() => handleClickUnLike(true)}
+                      >
+                        <Grid container justifyContent="space-around">
+                          Fjern super-like
+                          <StarIcon sx={{ml: 1}}></StarIcon>
+                        </Grid>
+                      </Button>
+                    ) : (
+                      <Button
+                        variant={'outlined'}
+                        onClick={() => handleClickLike(true)}
+                      >
+                        <Grid container justifyContent="space-around">
+                          Super like
+                          <StarBorderIcon sx={{ml: 1}}></StarBorderIcon>
+                        </Grid>
+                      </Button>
+                    )}
                   </Grid>
-                </Button>
-              </Grid>
-            </>
-          )}
-        </Grid>
-      </>
-      {[
-        groupFrom.likes
-          ?.filter(
-            like =>
-              like.id === groupIdTo &&
-              ((currentUser?.gold ?? false) === true || like.super === true)
+                ) : (
+                  <></>
+                )}
+              </>
+            ) : (
+              <>
+                <Grid container justifyContent="center">
+                  <Button variant={'contained'} onClick={handleClickUnMatch}>
+                    <Grid container justifyContent="space-around">
+                      Unmatch
+                      <CloseIcon sx={{ml: 1}}></CloseIcon>
+                    </Grid>
+                  </Button>
+                  <Grid container justifyContent="center" marginTop={1}>
+                    <Typography variant="caption">
+                      Dere matchet: {match?.date}
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </>
+            )}
+          </Grid>
+        ) : null}
+        {/** GROUP HAS LIKED/SUPERLIKED YOUR GROUP */}
+        {[
+          groupFrom.likes
+            ?.filter(
+              like =>
+                like.id === groupIdTo && (gold === true || like.super === true)
+            )
+            ?.sort(like => (like.super === true ? -1 : 1))[0] ?? null,
+        ].map(like =>
+          like === null ? null : (
+            <Grid
+              marginTop={3}
+              item
+              direction={'row'}
+              key={like.id}
+              sx={{width: 1, textAlign: 'center'}}
+            >
+              <Typography
+                variant="body1"
+                style={{width: '100%'}}
+                marginBottom={1}
+              >
+                {groupTo.name} har {like.super ? 'super-liket' : 'liket'}{' '}
+                {groupFrom.name}
+              </Typography>
+              <Button
+                variant={'outlined'}
+                onClick={() => handleClickLike(false)}
+              >
+                Match
+              </Button>
+            </Grid>
           )
-          ?.sort(like => (like.super === true ? -1 : 1))[0] ?? null,
-      ].map(like =>
-        like === null ? null : (
-          <Grid
-            marginLeft={29}
-            marginTop={2}
-            container
-            direction={'row'}
-            key={like.id}
-          >
+        )}
+        {/** GROUP INFO */}
+        <Grid container item direction="row" marginTop={3} marginBottom={3}>
+          {/** DESCRIPTION */}
+          <Grid item sx={{width: 1 / 3, verticalAlign: 'top'}}>
             <Typography
-              variant="body1"
-              style={{width: '100%'}}
-              marginBottom={1}
+              variant="h5"
+              sx={{textAlign: 'center', marginX: 2, marginBottom: 1}}
             >
-              {groupFrom.name} har blitt {like.super ? 'super-liket' : 'liket'}{' '}
-              av {groupTo.name}
+              Beskrivelse
             </Typography>
-            <Button
-              variant={'contained'}
-              onClick={() => handleClickLike(false)}
-            >
-              <Grid container justifyContent="space-around">
-                Godta
-              </Grid>
-            </Button>
-          </Grid>
-        )
-      )}
-      <Grid marginLeft={29} container direction={'row'} marginTop={3}>
-        <Grid sx={{mr: 3}}>
-          <Grid item>
-            <Box
-              component="img"
-              sx={{
-                height: 350,
-                width: 350,
-                maxHeight: {xs: 500, md: 250},
-                maxWidth: {xs: 500, md: 250},
-              }}
-              alt="Student group."
-              //src= groupTo.imageUrl  TODO
-              src="https://img.freepik.com/free-vector/group-young-people-posing-photo_52683-18823.jpg?t=st=1646909401~exp=1646910001~hmac=5acffd8fef1d5ec0375a2eafc88b06e09115773e54ace3acb2f3e2dc3ea74ae6"
-            />
-          </Grid>
-        </Grid>
-        <Grid>
-          <Grid marginTop={3}>
-            <Typography variant="body1" style={{width: 500}}>
+            <Typography variant="body1" sx={{textAlign: 'center', marginX: 2}}>
               {groupTo.description}
             </Typography>
           </Grid>
-          <Grid marginTop={3}>
-            <Typography>Interesser:</Typography>
-            <Typography variant="body1" style={{width: 500}}>
+          {/** INTERESTS */}
+          <Grid item sx={{width: 1 / 3, verticalAlign: 'top'}}>
+            <Typography
+              variant="h5"
+              sx={{textAlign: 'center', marginX: 2, marginBottom: 1}}
+            >
+              Interesser
+            </Typography>
+            <Typography variant="body1" sx={{textAlign: 'center', marginX: 2}}>
               {groupTo.interests.map(interest => (
                 <span key={interest}>
-                  - {interest}
+                  {interest}
                   <br />
                 </span>
               ))}
             </Typography>
           </Grid>
-          <Grid>
+          {/** MEMBERS ? HAVE ALREADY MATCHED : HAVE NOT MATCHED */}
+          <Grid item sx={{width: 1 / 3, verticalAlign: 'top'}}>
             {isMatch ? (
               <>
-                <Grid marginTop={3}>
-                  <Typography>Medlemmer:</Typography>
-                  <Typography variant="body1" style={{width: 500}}>
+                <Grid>
+                  <Typography
+                    variant="h5"
+                    sx={{textAlign: 'center', marginX: 2, marginBottom: 1}}
+                  >
+                    Medlemmer
+                  </Typography>
+                  <Typography variant="body1" sx={{textAlign: 'center'}}>
                     {groupTo.members
                       .map(
                         (userId: IFirebaseUserId) =>
@@ -402,55 +439,75 @@ export default function groupPage() {
                       )
                       .map(name => (
                         <span key={name}>
-                          - {name}
+                          {name}
                           <br />
                         </span>
                       ))}
-                  </Typography>
-                  {isRated ? (
-                    <Box marginTop={2} display="flex">
-                      <Typography component="legend">Total rating: </Typography>
-                      <Rating
-                        sx={{ml: 1}}
-                        name="total-rating"
-                        value={groupRating}
-                        disabled
-                        precision={0.5}
-                      />
-                    </Box>
-                  ) : (
-                    <></>
-                  )}
-                  <Box marginTop={2} display="flex">
-                    <Typography component="legend">{ratingText} </Typography>
-                    <Rating
-                      name="rate"
-                      value={rating}
-                      onChange={(event, newValue) => {
-                        handelRate(newValue ?? 0);
-                      }}
-                      disabled={!canRate}
-                      sx={{ml: 2.5}}
-                    />
-                  </Box>
-                </Grid>
-                <Grid container justifyContent="center" marginTop={5}>
-                  <Typography variant="caption">
-                    Dere matchet: {match?.date}
                   </Typography>
                 </Grid>
               </>
             ) : (
               <>
-                <Grid marginTop={3}>
-                  <Typography>Antall medlemmer:</Typography>
-                  <Typography variant="body1" style={{width: 500}}>
-                    {groupTo.members.length}
-                  </Typography>
-                </Grid>
+                <Typography
+                  variant="h5"
+                  sx={{textAlign: 'center', marginX: 2, marginBottom: 1}}
+                >
+                  Medlemmer
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{textAlign: 'center', marginX: 2}}
+                >
+                  {groupTo.members.length} medlemmer.
+                </Typography>
               </>
             )}
           </Grid>
+        </Grid>
+        {/** GIVE RATING */}
+        <Grid
+          container
+          item
+          direction={'column'}
+          alignItems="center"
+          sx={{width: 1, textAlign: 'center'}}
+        >
+          {isRated ? (
+            <Box marginTop={2} display="flex">
+              <Typography component="legend">
+                Gjennomsnittlig rating av gruppa:{' '}
+              </Typography>
+              <Rating
+                sx={{ml: 1}}
+                name="total-rating"
+                value={groupRating}
+                disabled
+                precision={0.5}
+              />
+            </Box>
+          ) : (
+            <Typography variant="body1">
+              Gruppa har ikke mottatt noen rating.
+            </Typography>
+          )}
+          {isMatch ? (
+            <Box marginTop={2} display="flex">
+              <Typography component="legend">{ratingText} </Typography>
+              <Rating
+                name="rate"
+                value={rating}
+                onChange={(event, newValue) => {
+                  handelRate(newValue ?? 0);
+                }}
+                disabled={!canRate}
+                sx={{ml: 2.5}}
+              />
+            </Box>
+          ) : (
+            <Typography variant="body1" marginTop={2}>
+              Du kan gi gruppa en egen rating hvis dere matcher!
+            </Typography>
+          )}
         </Grid>
       </Grid>
     </>
