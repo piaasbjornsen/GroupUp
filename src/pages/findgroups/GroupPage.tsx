@@ -15,6 +15,7 @@ import {
   IFirebaseMatch,
   IFirebaseLike,
   IFirebaseUserName,
+  IFirebaseDb,
 } from '../../interfaces/firebase';
 import {useParams} from 'react-router-dom';
 import {emptyGroupObject} from '../../utils/constants';
@@ -39,6 +40,7 @@ export default function groupPage() {
   const [isLiked, setIsLiked] = useState<boolean>();
   const [isSuperLiked, setIsSuperLiked] = useState<boolean>();
   const [users, setUsers] = useState<IUserListItem[]>([]);
+  const [gold, setGold] = useState<boolean>(false);
 
   useEffect(() => {
     //groupTO
@@ -91,6 +93,12 @@ export default function groupPage() {
       if (typeof groupFrom.matches === 'undefined') {
         groupFrom.matches = [];
       }
+      firebaseUsers.once('value', snapshot => {
+        const users: IFirebaseDb['users'] = snapshot.val();
+        setGold(
+          groupFrom.members.some((user: string) => users[user].gold ?? false)
+        );
+      });
     });
 
     //Users
@@ -212,7 +220,7 @@ export default function groupPage() {
                   </Button>
                 )}
               </Grid>
-              {currentUser?.gold ?? false ? (
+              {gold ? (
                 <Grid marginLeft={2}>
                   {isSuperLiked ? (
                     <Button
