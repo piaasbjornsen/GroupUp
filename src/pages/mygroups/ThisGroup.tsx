@@ -20,8 +20,10 @@ import {
   IFirebaseGroup,
   IFirebaseInterest,
   IFirebaseMatch,
+  IFirebaseLike,
   IFirebaseUserId,
   IFirebaseUserName,
+  IFirebaseGroups,
 } from '../../interfaces/firebase';
 import {Link, useNavigate, useParams} from 'react-router-dom';
 import {AuthContext} from '../../context/AuthContext';
@@ -44,30 +46,36 @@ interface IUserListItem {
 }
 
 interface IMatchListItem extends IFirebaseGroup, IFirebaseMatch {}
+interface ILikeListItem {
+  id: string;
+  group: IFirebaseGroup;
+}
 
 const AddToList: React.FC = () => {
   const currentUser = useContext(AuthContext);
-
   const [input, setInput] = useState<IFirebaseGroup>(emptyGroupObject);
   const [interests, setInterests] = useState<IFirebaseInterest[]>([]);
   const [users, setUsers] = useState<IUserListItem[]>([]);
-  const [group, setGroup] = useState<IFirebaseGroup | null>(null);
   const [resetForm, setResetForm] = useState(false);
   const [matchedGroups, setMatchedGroups] = useState<IMatchListItem[]>([]);
+  const [superLikesGroups, setSuperLikesGroups] = useState<ILikeListItem[]>([]);
+  const [likesGroups, setlikesGroups] = useState<ILikeListItem[]>([]);
   const [errorMessages, setErrorMessages] =
     useState<IErrorMessages>(emptyErrorMessages);
   const [updateSucceeded, setUpdateSucceeded] = useState(false);
   const [invalidGroupId, setInvalidGroupId] = useState(false);
-
+  const [group, setGroup] = useState<IFirebaseGroup>(emptyGroupObject);
   const urlParams = useParams();
   const user = useContext(AuthContext);
   const navigate = useNavigate();
+  const groupID = urlParams.groupId ? urlParams.groupId : '';
+  const [groups, setGroups] = useState<IFirebaseDb['groups']>();
+  const [gold, setGold] = useState<boolean>(false);
 
   useEffect(() => {
-    console.log(urlParams);
-
     firebaseGroups.once('value', snapshot => {
       const groups: IFirebaseDb['groups'] = snapshot.val();
+      setGroups(groups);
       const thisGroup = groups[urlParams.groupId ?? ''];
       if (groups[urlParams.groupId ?? ''] ?? false) {
         setGroup(thisGroup);
@@ -101,6 +109,44 @@ const AddToList: React.FC = () => {
     firebaseInterests.once('value', snapshot => {
       const interests = snapshot.val();
       setInterests(interests);
+    });
+
+    //Group
+    firebaseGroups.child(groupID).once('value', snapshot => {
+      const group = snapshot.val();
+      if (typeof group.likes === 'undefined') {
+        group.likes = [];
+      }
+      if (typeof group.matches === 'undefined') {
+        group.matches = [];
+      }
+      firebaseGroups.once('value', snapshot => {
+        const groups: IFirebaseGroups = snapshot.val();
+        const superLikesID: string[] = group.likes
+          .filter((like: IFirebaseLike) => like.super)
+          .map((like: IFirebaseLike) => like.id);
+        const superLikesList: ILikeListItem[] = group.likes
+          .filter((like: IFirebaseLike) => like.super && like.id !== '')
+          .map((like: IFirebaseLike) => {
+            return {id: like.id, group: groups[like.id]};
+          });
+        setSuperLikesGroups(superLikesList);
+        const likesList: ILikeListItem[] = group.likes
+          .filter(
+            (like: IFirebaseLike) =>
+              !like.super && !superLikesID.includes(like.id) && like.id !== ''
+          )
+          .map((like: IFirebaseLike) => {
+            return {id: like.id, group: groups[like.id]};
+          });
+        setlikesGroups(likesList);
+        firebaseUsers.once('value', snapshot => {
+          const users: IFirebaseDb['users'] = snapshot.val();
+          setGold(
+            group.members.some((user: string) => users[user].gold ?? false)
+          );
+        });
+      });
     });
   }, []);
 
@@ -168,6 +214,108 @@ const AddToList: React.FC = () => {
       ...input,
       [e.target.name]: e.target.value,
     });
+  };
+
+  const updateLists = (group: IFirebaseGroup) => {
+    const superLikesList: ILikeListItem[] = group.likes
+      .filter((like: IFirebaseLike) => like.super && like.id !== '')
+      .map((like: IFirebaseLike) => {
+        return {
+          id: like.id,
+          group: groups ? groups[like.id] : emptyGroupObject,
+        };
+      });
+    setSuperLikesGroups(superLikesList);
+    const superLikesID: string[] = group.likes
+      .filter((like: IFirebaseLike) => like.super)
+      .map((like: IFirebaseLike) => like.id);
+    const likesList: ILikeListItem[] = group.likes
+      .filter(
+        (like: IFirebaseLike) =>
+          !like.super && !superLikesID.includes(like.id) && like.id !== ''
+      )
+      .map((like: IFirebaseLike) => {
+        return {
+          id: like.id,
+          group: groups ? groups[like.id] : emptyGroupObject,
+        };
+      });
+    setlikesGroups(likesList);
+    const matchList: IMatchListItem[] = (
+      group.matches ?? []
+    ).map<IMatchListItem>(match => ({
+      ...(groups ? groups[match.id] : emptyGroupObject),
+      ...match,
+    }));
+
+    setMatchedGroups(matchList);
+  };
+
+  const handleClickLike = (groupIdTo: string): void => {
+    const like: IFirebaseLike = {
+      id: groupID,
+      super: false,
+    };
+
+    const groupTo = groups ? groups[groupIdTo] : emptyGroupObject;
+
+    //Validering
+    if (typeof groupTo.likes === 'undefined') {
+      groupTo.likes = [];
+    }
+
+    if (typeof groupTo.matches === 'undefined') {
+      groupTo.likes = [];
+    }
+
+    if (typeof group.likes === 'undefined') {
+      groupTo.likes = [];
+    }
+
+    if (typeof group.matches === 'undefined') {
+      groupTo.likes = [];
+    }
+
+    const matchTo: IFirebaseMatch = {
+      id: groupID,
+      date: new Date().toLocaleString(),
+    };
+    const matchFrom: IFirebaseMatch = {
+      id: groupIdTo,
+      date: new Date().toLocaleString(),
+    };
+    if (!group.likes.some((like: IFirebaseLike) => like.id === groupIdTo)) {
+      groupTo.likes.push(like);
+      firebaseGroups.child(groupIdTo + '/likes').set(groupTo.likes);
+    } else {
+      groupTo.likes = groupTo.likes.filter(
+        (like: IFirebaseLike) => like.id !== groupID
+      );
+      group.likes = group.likes.filter(
+        (like: IFirebaseLike) => like.id !== groupIdTo
+      );
+      group.matches.push(matchFrom);
+      groupTo.matches.push(matchTo);
+      firebaseGroups.child(groupID + '/matches').set(group.matches);
+      firebaseGroups.child(groupIdTo + '/matches').set(groupTo.matches);
+      firebaseGroups.child(groupID + '/likes').set(group.likes);
+      firebaseGroups.child(groupIdTo + '/likes').set(groupTo.likes);
+    }
+    updateLists(group);
+  };
+
+  const handleDeleteLike = (groupIdTo: string): void => {
+    group.likes = group.likes.filter(
+      (like: IFirebaseLike) => like.id !== groupIdTo || like.super
+    );
+    firebaseGroups.child(groupID + '/likes').set(group.likes);
+  };
+  const handleDeleteSuperLike = (groupIdTo: string): void => {
+    group.likes = group.likes.filter(
+      (like: IFirebaseLike) => like.id !== groupIdTo || !like.super
+    );
+    firebaseGroups.child(groupID + '/likes').set(group.likes);
+    updateLists(group);
   };
 
   const handleClick = (): void => {
@@ -422,6 +570,121 @@ const AddToList: React.FC = () => {
         justifyContent="center"
         marginBottom={10}
       >
+        {superLikesGroups.length > 0 ? (
+          <Typography
+            variant="h4"
+            marginLeft={2}
+            marginTop={5}
+            marginBottom={5}
+          >
+            Superlikes
+          </Typography>
+        ) : (
+          <></>
+        )}
+        <Grid
+          container
+          spacing={5}
+          alignItems="stretch"
+          sx={{width: {sx: 1, sm: '70%'}}}
+        >
+          {superLikesGroups.length > 0 ? (
+            superLikesGroups.map((likesGroup: ILikeListItem) => (
+              <Grid item key={likesGroup.id} xs>
+                <Card
+                  sx={{
+                    maxWidth: 245,
+                    minWidth: {sx: 'default', sm: 200},
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => {
+                    navigate(
+                      '/grouppage/' + urlParams.groupId + '/' + likesGroup.id
+                    );
+                  }}
+                >
+                  <CardContent>
+                    <Typography variant="h5" component="div">
+                      {likesGroup.group.name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {likesGroup.group.description}
+                    </Typography>
+                  </CardContent>
+                </Card>
+                <Button onClick={() => handleClickLike(likesGroup.id)}>
+                  Like
+                </Button>
+                <Button onClick={() => handleDeleteSuperLike(likesGroup.id)}>
+                  Slett
+                </Button>
+              </Grid>
+            ))
+          ) : (
+            <></>
+          )}
+        </Grid>
+        {likesGroups.length > 0 && gold ? (
+          <Typography
+            variant="h4"
+            marginLeft={2}
+            marginTop={5}
+            marginBottom={5}
+          >
+            Likes
+          </Typography>
+        ) : (
+          <></>
+        )}
+        <Grid
+          container
+          spacing={5}
+          alignItems="stretch"
+          sx={{width: {sx: 1, sm: '70%'}}}
+        >
+          {likesGroups.length > 0 && gold ? (
+            likesGroups.map((likesGroup: ILikeListItem) => (
+              <Grid item key={likesGroup.id} xs>
+                <Card
+                  sx={{
+                    maxWidth: 245,
+                    minWidth: {sx: 'default', sm: 200},
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => {
+                    navigate(
+                      '/grouppage/' + urlParams.groupId + '/' + likesGroup.id
+                    );
+                  }}
+                >
+                  <CardContent>
+                    <Typography variant="h5" component="div">
+                      {likesGroup.group.name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {likesGroup.group.description}
+                    </Typography>
+                  </CardContent>
+                </Card>
+                <Button onClick={() => handleClickLike(likesGroup.id)}>
+                  Like
+                </Button>
+                <Button onClick={() => handleDeleteLike(likesGroup.id)}>
+                  Slett
+                </Button>
+              </Grid>
+            ))
+          ) : (
+            <></>
+          )}
+        </Grid>
+        <Grid
+          marginTop={5}
+          container
+          spacing={5}
+          alignItems="stretch"
+          sx={{width: {sx: 1, sm: '70%'}}}
+        ></Grid>
         <Typography variant="h4" marginLeft={2} marginTop={5} marginBottom={5}>
           Matchede grupper
         </Typography>
