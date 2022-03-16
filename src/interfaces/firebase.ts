@@ -31,6 +31,7 @@ export type IFirebaseInterest = string;
 export interface IFirebaseUser {
   name: IFirebaseUserName;
   admin: boolean;
+  gold?: boolean;
 }
 
 export interface IFirebaseGroups {
