@@ -13,6 +13,7 @@ import CreateGroup from './pages/creategroup/CreateGroup';
 import GroupTable from './pages/findgroups/GroupTable';
 import ThisGroup from './pages/mygroups/ThisGroup';
 import GroupPage from './pages/findgroups/GroupPage';
+import SetUserData from './pages/login/SetUserData';
 
 function App() {
   const user = useContext(AuthContext);
@@ -38,6 +39,7 @@ function App() {
                 path="/groups/:groupId/findgroups"
                 element={<GroupTable />}
               ></Route>
+              <Route path="/login" element={<SetUserData />}></Route>
             </Routes>
           </>
         )}
