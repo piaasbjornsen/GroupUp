@@ -9,6 +9,7 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import CloseIcon from '@mui/icons-material/Close';
 import StarIcon from '@mui/icons-material/Star';
 import CircularProgress from '@mui/material/CircularProgress';
+import Rating from '@mui/material/Rating';
 import {
   IFirebaseGroup,
   IFirebaseUserId,
@@ -16,6 +17,8 @@ import {
   IFirebaseLike,
   IFirebaseUserName,
   IFirebaseDb,
+  IFirebaseUser,
+  IFirebaseRating,
 } from '../../interfaces/firebase';
 import {useParams} from 'react-router-dom';
 import {emptyGroupObject} from '../../utils/constants';
@@ -41,11 +44,18 @@ export default function groupPage() {
   const [isSuperLiked, setIsSuperLiked] = useState<boolean>();
   const [users, setUsers] = useState<IUserListItem[]>([]);
   const [gold, setGold] = useState<boolean>(false);
+  const [rating, setRating] = React.useState<number | null>(0);
+  const [canRate, setCanRate] = React.useState<boolean>(true);
+  const [isRated, setIsRated] = React.useState<boolean>(false);
+  const user = useContext(AuthContext);
+  const userID = user ? user.uid : '';
+  const [groupRating, setGroupRating] = React.useState<number>(0);
+  const ratingText: string = canRate ? 'Gi rating:' : 'Din rating:';
 
   useEffect(() => {
     //groupTO
     firebaseGroups.child(groupIdTo).once('value', snapshot => {
-      const groupTo = snapshot.val();
+      const groupTo: IFirebaseGroup = snapshot.val();
       setGroupTo(groupTo);
       if (typeof groupTo.likes === 'undefined') {
         groupTo.likes = [];
@@ -71,17 +81,25 @@ export default function groupPage() {
       groupTo.matches
         .filter((match: IFirebaseMatch) => match.id === groupIdFrom)
         .some((match: IFirebaseMatch) => setMatch(match));
+
+      setIsLiked(
+        groupTo.likes.some(
+          (like: IFirebaseLike) => like.id === groupIdFrom && !like.super
+        )
+      );
+      setIsSuperLiked(
+        groupTo.likes.some(
+          (like: IFirebaseLike) => like.id === groupIdFrom && like.super
+        )
+      );
+
+      if (
+        !(typeof groupTo.rating === 'undefined' || groupTo.rating.count === 0)
+      ) {
+        setIsRated(true);
+        setGroupRating(groupTo.rating.score / groupTo.rating.count);
+      }
     });
-    setIsLiked(
-      groupTo.likes.some(
-        (like: IFirebaseLike) => like.id === groupIdFrom && !like.super
-      )
-    );
-    setIsSuperLiked(
-      groupTo.likes.some(
-        (like: IFirebaseLike) => like.id === groupIdFrom && like.super
-      )
-    );
 
     //GroupFrom
     firebaseGroups.child(groupIdFrom).once('value', snapshot => {
@@ -98,6 +116,17 @@ export default function groupPage() {
         setGold(
           groupFrom.members.some((user: string) => users[user].gold ?? false)
         );
+        if (
+          (users[userID].groupsRated ?? []).some(
+            (rating: IFirebaseRating) => rating.groupRated === groupIdTo
+          )
+        ) {
+          setCanRate(false);
+          const rating: IFirebaseRating | undefined = (
+            users[userID].groupsRated ?? []
+          ).find((rating: IFirebaseRating) => rating.groupRated === groupIdTo);
+          setRating(rating?.rating ?? 0);
+        }
       });
     });
 
@@ -169,6 +198,34 @@ export default function groupPage() {
     setMatch(null);
     setIsLiked(false);
     setIsSuperLiked(false);
+  };
+
+  const handelRate = (value: number): void => {
+    setCanRate(false);
+    setRating(value);
+    firebaseUsers.once('value', snapshot => {
+      const users: IFirebaseDb['users'] = snapshot.val();
+      const user: IFirebaseUser = users[userID];
+      user.groupsRated = user.groupsRated ?? [];
+      if (
+        user.groupsRated.some(
+          (rating: IFirebaseRating) => rating.groupRated === groupIdTo
+        )
+      ) {
+        return;
+      } else {
+        user.groupsRated.push({groupRated: groupIdTo, rating: value});
+        firebaseUsers.child(userID).set(user);
+        if (typeof groupTo.rating === 'undefined') {
+          groupTo.rating = {score: 0, count: 0};
+        }
+        groupTo.rating.score += value;
+        groupTo.rating.count++;
+        firebaseGroups.child(groupIdTo).set(groupTo);
+        setGroupRating(groupTo.rating.score / groupTo.rating.count);
+        setIsRated(true);
+      }
+    });
   };
 
   if (
@@ -350,6 +407,32 @@ export default function groupPage() {
                         </span>
                       ))}
                   </Typography>
+                  {isRated ? (
+                    <Box marginTop={2} display="flex">
+                      <Typography component="legend">Total rating: </Typography>
+                      <Rating
+                        sx={{ml: 1}}
+                        name="total-rating"
+                        value={groupRating}
+                        disabled
+                        precision={0.5}
+                      />
+                    </Box>
+                  ) : (
+                    <></>
+                  )}
+                  <Box marginTop={2} display="flex">
+                    <Typography component="legend">{ratingText} </Typography>
+                    <Rating
+                      name="rate"
+                      value={rating}
+                      onChange={(event, newValue) => {
+                        handelRate(newValue ?? 0);
+                      }}
+                      disabled={!canRate}
+                      sx={{ml: 2.5}}
+                    />
+                  </Box>
                 </Grid>
                 <Grid container justifyContent="center" marginTop={5}>
                   <Typography variant="caption">

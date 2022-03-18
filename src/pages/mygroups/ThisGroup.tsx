@@ -257,7 +257,9 @@ const AddToList: React.FC = () => {
       super: false,
     };
 
-    const groupTo = groups ? groups[groupIdTo] : emptyGroupObject;
+    const groupTo: IFirebaseGroup = groups
+      ? groups[groupIdTo]
+      : emptyGroupObject;
 
     //Validering
     if (typeof groupTo.likes === 'undefined') {
