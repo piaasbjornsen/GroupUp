@@ -13,6 +13,8 @@ export const emptyGroupObject: IFirebaseGroup = {
 
 export const emptyUserObject: IFirebaseUser = {
   name: '',
+  email: '',
+  dateOfBirth: '',
   admin: false,
   gold: false,
 };

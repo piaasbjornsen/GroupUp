@@ -4,21 +4,17 @@ import './index.css';
 import firebase from 'firebase/app';
 import 'firebase/auth';
 import 'firebase/firestore';
-import {createStore} from 'redux';
 import {Provider} from 'react-redux';
 import {ReactReduxFirebaseProvider} from 'react-redux-firebase';
 import {createFirestoreInstance} from 'redux-firestore';
-import {rootReducer} from './state/reducers';
 import App from './App';
 import {AuthProvider} from './provider/AuthProvider';
+import {store} from './redux/store';
 
 const rrfConfig = {
   userProfile: 'users',
   useFirestoreForProfile: true,
 };
-
-const initialState = {};
-const store = createStore(rootReducer, initialState);
 
 const rrfProps = {
   firebase,

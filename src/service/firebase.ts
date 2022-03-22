@@ -21,7 +21,10 @@ export const auth = firebase.auth();
 const provider = new firebase.auth.GoogleAuthProvider();
 provider.setCustomParameters({prompt: 'select_account'});
 export const signInWithGoogle = () => auth.signInWithPopup(provider);
-export const signOut = () => auth.signOut();
+export const signOut = () => {
+  sessionStorage.setItem('currentGroup', '{}');
+  auth.signOut();
+};
 
 //database
 const database = firebase.database().ref();
