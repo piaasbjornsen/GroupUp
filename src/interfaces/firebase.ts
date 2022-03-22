@@ -43,6 +43,7 @@ export interface IFirebaseUser {
   name: IFirebaseUserName;
   admin: boolean;
   gold?: boolean;
+  dateOfBirth?: Date;
   groupsRated?: IFirebaseRating[];
 }
 
