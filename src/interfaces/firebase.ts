@@ -14,6 +14,7 @@ export interface IFirebaseGroup {
   imageUrl: string;
   likes: IFirebaseLike[];
   matches: IFirebaseMatch[];
+  rating?: IFirebaseRatingGroup;
 }
 
 export interface IFirebaseLike {
@@ -28,10 +29,21 @@ export interface IFirebaseMatch {
 
 export type IFirebaseInterest = string;
 
+export interface IFirebaseRating {
+  groupRated: string;
+  rating: number;
+}
+
+export interface IFirebaseRatingGroup {
+  score: number;
+  count: number;
+}
+
 export interface IFirebaseUser {
   name: IFirebaseUserName;
   admin: boolean;
   gold?: boolean;
+  groupsRated?: IFirebaseRating[];
 }
 
 export interface IFirebaseGroups {
