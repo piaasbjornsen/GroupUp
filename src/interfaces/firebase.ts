@@ -15,6 +15,7 @@ export interface IFirebaseGroup {
   likes: IFirebaseLike[];
   matches: IFirebaseMatch[];
   rating?: IFirebaseRatingGroup;
+  meetingDate: string;
 }
 
 export interface IFirebaseLike {

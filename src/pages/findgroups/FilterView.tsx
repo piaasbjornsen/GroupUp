@@ -147,8 +147,16 @@ export default function FilterView(props: IFilterViewProps) {
           valueLabelDisplay="auto"
           getAriaValueText={() => 'Testtekst'}
           disableSwap
-          min={props.minmax.age[0] !== null ? props.minmax.age[0] : 1}
-          max={props.minmax.age[1] !== null ? props.minmax.age[1] : 30}
+          min={
+            props.minmax.age[0] !== null && !isNaN(props.minmax.age[0])
+              ? props.minmax.age[0]
+              : 1
+          }
+          max={
+            props.minmax.age[1] !== null && !isNaN(props.minmax.age[1])
+              ? props.minmax.age[1]
+              : 30
+          }
         />
       </Grid>
       <Grid item sx={{ml: 4}}>
@@ -171,12 +179,14 @@ export default function FilterView(props: IFilterViewProps) {
           valueLabelDisplay="auto"
           getAriaValueText={() => 'testTds'}
           min={
-            props.minmax.memberCount[0] !== null
+            props.minmax.memberCount[0] !== null &&
+            !isNaN(props.minmax.memberCount[0])
               ? props.minmax.memberCount[0]
               : 18
           }
           max={
-            props.minmax.memberCount[1] !== null
+            props.minmax.memberCount[1] !== null &&
+            !isNaN(props.minmax.memberCount[1])
               ? props.minmax.memberCount[1]
               : 30
           }

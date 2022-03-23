@@ -9,6 +9,7 @@ export const emptyGroupObject: IFirebaseGroup = {
   imageUrl: '',
   likes: [],
   matches: [],
+  meetingDate: '',
 };
 
 export const emptyUserObject: IFirebaseUser = {
