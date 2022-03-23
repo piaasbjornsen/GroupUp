@@ -39,6 +39,11 @@ export interface IFirebaseRatingGroup {
   count: number;
 }
 
+export interface IFirebaseReport {
+  reportedBy: string;
+  reason: string;
+}
+
 export interface IFirebaseUser {
   name: IFirebaseUserName;
   email: string | null;
@@ -46,6 +51,7 @@ export interface IFirebaseUser {
   gold?: boolean;
   dateOfBirth: string;
   groupsRated?: IFirebaseRating[];
+  reports?: IFirebaseReport[];
 }
 
 export interface IFirebaseGroups {
