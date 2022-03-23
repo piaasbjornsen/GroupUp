@@ -17,6 +17,8 @@ export const emptyUserObject: IFirebaseUser = {
   dateOfBirth: '',
   admin: false,
   gold: false,
+  groupsRated: [],
+  reports: [],
 };
 
 export const availableLocations = ['Trondheim', 'Oslo', 'Bergen', 'Stavanger'];

@@ -35,7 +35,8 @@ export default function FindGroups() {
         const groups: IFirebaseGroups = snapshot.val();
         const groupArray = Object.entries(groups)
           .filter(
-            (group: [string, IFirebaseGroup]) => group[0] !== currentGroup
+            (group: [string, IFirebaseGroup]) =>
+              group[0] !== currentGroup.groupId
           )
           .map((group: [string, IFirebaseGroup]) => {
             let minAge: number | null = null;

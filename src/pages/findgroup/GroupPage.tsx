@@ -18,12 +18,16 @@ import {
   IFirebaseDb,
   IFirebaseUser,
   IFirebaseRating,
+  IFirebaseReport,
+  IFirebaseUsers,
 } from '../../interfaces/firebase';
 import {useParams} from 'react-router-dom';
 import {emptyGroupObject} from '../../utils/constants';
 import {AuthContext} from '../../context/AuthContext';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../redux/store';
+import SimpleDialogDemo from './DialogBox';
+import ReportIcon from '@mui/icons-material/Report';
 
 //Bruker i liste
 interface IUserListItem {
@@ -37,6 +41,7 @@ export default function groupPage() {
 
   const [groupTo, setGroupTo] = useState<IFirebaseGroup>(emptyGroupObject);
   const [groupFrom, setGroupFrom] = useState<IFirebaseGroup>(emptyGroupObject);
+  const [groupToMembers, setGroupToMembers] = useState<string[]>([]);
   const urlParams = useParams();
   const [isMatch, setIsMatch] = useState<boolean>();
   const [match, setMatch] = useState<IFirebaseMatch | null>();
@@ -45,6 +50,7 @@ export default function groupPage() {
   const [isLiked, setIsLiked] = useState<boolean>();
   const [isSuperLiked, setIsSuperLiked] = useState<boolean>();
   const [users, setUsers] = useState<IUserListItem[]>([]);
+  const [users2, setUsers2] = useState<IFirebaseUsers>({});
   const [gold, setGold] = useState<boolean>(false);
   const [rating, setRating] = React.useState<number | null>(0);
   const [canRate, setCanRate] = React.useState<boolean>(true);
@@ -60,6 +66,7 @@ export default function groupPage() {
     firebaseGroups.child(groupIdTo).once('value', snapshot => {
       const groupTo: IFirebaseGroup = snapshot.val();
       setGroupTo(groupTo);
+      setGroupToMembers(groupTo.members);
       if (typeof groupTo.likes === 'undefined') {
         groupTo.likes = [];
       }
@@ -135,7 +142,8 @@ export default function groupPage() {
 
     //Users
     firebaseUsers.once('value', snapshot => {
-      const users = snapshot.val();
+      const users: IFirebaseUsers = snapshot.val();
+      setUsers2(users);
       const userList: IUserListItem[] = Object.keys(users).map<IUserListItem>(
         userId => ({
           id: userId,
@@ -424,26 +432,57 @@ export default function groupPage() {
           <Grid item sx={{width: 1 / 3, verticalAlign: 'top'}}>
             {isMatch ? (
               <>
-                <Grid>
-                  <Typography
-                    variant="h5"
-                    sx={{textAlign: 'center', marginX: 2, marginBottom: 1}}
-                  >
-                    Medlemmer
-                  </Typography>
-                  <Typography variant="body1" sx={{textAlign: 'center'}}>
-                    {groupTo.members
-                      .map(
-                        (userId: IFirebaseUserId) =>
-                          users.find(user => user.id === userId)?.name
-                      )
-                      .map(name => (
-                        <span key={name}>
-                          {name}
-                          <br />
-                        </span>
-                      ))}
-                  </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{textAlign: 'center', marginX: 2, marginBottom: 1}}
+                >
+                  Medlemmer
+                </Typography>
+                <Grid container item direction="column" justifyContent="center">
+                  {groupToMembers
+                    .map(
+                      (userId: IFirebaseUserId) =>
+                        users.find(user => user.id === userId) ?? {
+                          id: '',
+                          name: '',
+                        }
+                    )
+                    .filter((user: IUserListItem) => user.id !== '')
+                    .map((user: IUserListItem) => (
+                      <Grid
+                        item
+                        container
+                        key={user.id}
+                        display="flex"
+                        justifyContent="center"
+                        alignItems="center"
+                        marginRight={12}
+                        flexWrap="wrap"
+                        marginBottom={1.5}
+                      >
+                        <Typography sx={{width: 1, textAlign: 'center'}}>
+                          {user.name}
+                        </Typography>
+                        <Grid marginTop={0.5}>
+                          {users2[user.id].reports?.some(
+                            (report: IFirebaseReport) =>
+                              report.reportedBy === userID
+                          ) ? (
+                            <Button variant="outlined" size="small" disabled>
+                              Er rapportert
+                              <ReportIcon sx={{ml: 1}}></ReportIcon>
+                            </Button>
+                          ) : (
+                            <SimpleDialogDemo
+                              userID={user.id}
+                              groupToMembers={groupToMembers}
+                              setGroupToMembers={setGroupToMembers}
+                              setUsers2={setUsers2}
+                            ></SimpleDialogDemo>
+                          )}
+                        </Grid>
+                      </Grid>
+                    ))}
                 </Grid>
               </>
             ) : (
