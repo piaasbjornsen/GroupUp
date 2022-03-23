@@ -397,8 +397,23 @@ export default function groupPage() {
             </Grid>
           )
         )}
+        {/** MEETING DATE */}
+        <Grid
+          container
+          item
+          direction="row"
+          marginTop={2}
+          justifyContent="center"
+        >
+          <Typography variant="body1">
+            {groupTo.name} har{' '}
+            {(groupTo.meetingDate ?? '') === ''
+              ? 'ingen foretrukket møtedato'
+              : 'foretrukket møtedato ' + groupTo.meetingDate}
+          </Typography>
+        </Grid>
         {/** GROUP INFO */}
-        <Grid container item direction="row" marginTop={3} marginBottom={3}>
+        <Grid container item direction="row" marginTop={1} marginBottom={3}>
           {/** DESCRIPTION */}
           <Grid item sx={{width: 1 / 3, verticalAlign: 'top'}}>
             <Typography

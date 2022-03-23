@@ -39,7 +39,8 @@ function App() {
           </Grid>
         ) : currentUser === null ? (
           <Login />
-        ) : currentUser.gold === null ||
+        ) : currentUser.gold === undefined ||
+          currentUser.dateOfBirth === '' ||
           currentUser.dateOfBirth === undefined ? (
           <SetUserData />
         ) : currentGroup?.groupId === undefined ? (

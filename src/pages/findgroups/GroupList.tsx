@@ -13,6 +13,7 @@ export interface IGroupListItem {
   description: string;
   minAge: number;
   maxAge: number;
+  meetingDate: string;
 }
 
 interface IGroupListProps {

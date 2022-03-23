@@ -17,6 +17,7 @@ import FilterView, {
   IMinMax,
 } from './FilterView';
 import GroupList, {IGroupListItem} from './GroupList';
+import {stringToDate} from '../../utils/date-time';
 
 export default function FindGroups() {
   const currentGroup = useSelector((state: RootState) => state.currentGroup);
@@ -33,6 +34,7 @@ export default function FindGroups() {
       const users: IFirebaseUsers = userSnapshot.val();
       firebaseGroups.once('value', snapshot => {
         const groups: IFirebaseGroups = snapshot.val();
+        console.log('We have ' + Object.keys(groups).length + ' groups');
         const groupArray = Object.entries(groups)
           .filter(
             (group: [string, IFirebaseGroup]) =>
@@ -106,6 +108,7 @@ export default function FindGroups() {
               description: group[1].description,
               minAge: minAge === null ? 0 : minAge,
               maxAge: maxAge === null ? 0 : maxAge,
+              meetingDate: group[1].meetingDate,
             };
           });
         setGroups(groupArray);
@@ -133,8 +136,11 @@ export default function FindGroups() {
         interests={interests}
       />
       <GroupList
-        groups={groups.filter(
-          group =>
+        groups={groups.filter(group => {
+          const meetingDate = stringToDate(group.meetingDate);
+          const fromDate = stringToDate(filters.fromDate);
+          const toDate = stringToDate(filters.toDate);
+          const show =
             (group.location === filters.location || filters.location === '') &&
             group.minAge >= filters.age[0] &&
             group.maxAge <= filters.age[1] &&
@@ -144,8 +150,45 @@ export default function FindGroups() {
               interest =>
                 filters.interests.includes(interest) ||
                 filters.interests.length === 0
-            ).length > 0
-        )}
+            ).length > 0 &&
+            (filters.fromDate === '' ||
+              (group.meetingDate !== '' &&
+                meetingDate !== null &&
+                fromDate !== null &&
+                meetingDate >= fromDate)) &&
+            (filters.toDate === '' ||
+              (group.meetingDate !== '' &&
+                meetingDate !== null &&
+                toDate !== null &&
+                meetingDate <= toDate));
+          if (!show) {
+            console.log(group);
+            console.log(group.minAge);
+            console.log(
+              group.location === filters.location || filters.location === '',
+              group.minAge >= filters.age[0],
+              group.maxAge <= filters.age[1],
+              group.memberCount >= filters.memberCount[0],
+              group.memberCount <= filters.memberCount[1],
+              group.interests.filter(
+                interest =>
+                  filters.interests.includes(interest) ||
+                  filters.interests.length === 0
+              ).length > 0,
+              filters.fromDate === '' ||
+                (group.meetingDate !== '' &&
+                  meetingDate !== null &&
+                  fromDate !== null &&
+                  meetingDate >= fromDate),
+              filters.toDate === '' ||
+                (group.meetingDate !== '' &&
+                  meetingDate !== null &&
+                  toDate !== null &&
+                  meetingDate <= toDate)
+            );
+          }
+          return show;
+        })}
       />
     </Grid>
   );
