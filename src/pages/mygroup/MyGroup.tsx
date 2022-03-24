@@ -170,17 +170,14 @@ const AddToList: React.FC = () => {
     return <ContainedAlert severity="error" message="Ugyldig gruppe id" />;
   }
 
-  if (group === null || users === null || interests === null) {
+  if (
+    group === null ||
+    group === emptyGroupObject ||
+    users === null ||
+    interests === null ||
+    currentUser === null
+  ) {
     return <ContainedAlert severity="info" message="Laster inn..." />;
-  }
-
-  if (currentUser === null || !group.members?.includes(currentUser?.uid)) {
-    return (
-      <ContainedAlert
-        severity="error"
-        message="Du må være med i gruppen for å kunne se denne siden."
-      />
-    );
   }
 
   const handleChange = (

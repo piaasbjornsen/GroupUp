@@ -34,7 +34,6 @@ export default function FindGroups() {
       const users: IFirebaseUsers = userSnapshot.val();
       firebaseGroups.once('value', snapshot => {
         const groups: IFirebaseGroups = snapshot.val();
-        console.log('We have ' + Object.keys(groups).length + ' groups');
         const groupArray = Object.entries(groups)
           .filter(
             (group: [string, IFirebaseGroup]) =>

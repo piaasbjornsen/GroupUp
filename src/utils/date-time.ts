@@ -3,7 +3,7 @@ export const stringToDate = (string: string) => {
   if (string === undefined) {
     return null;
   }
-  const parts = string.split('/');
+  const parts = string.split('-');
   if (parts.length !== 3) {
     return null;
   }

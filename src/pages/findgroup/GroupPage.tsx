@@ -376,7 +376,6 @@ export default function groupPage() {
             <Grid
               marginTop={3}
               item
-              direction={'row'}
               key={like.id}
               sx={{width: 1, textAlign: 'center'}}
             >
@@ -409,7 +408,10 @@ export default function groupPage() {
             {groupTo.name} har{' '}
             {(groupTo.meetingDate ?? '') === ''
               ? 'ingen foretrukket møtedato'
-              : 'foretrukket møtedato ' + groupTo.meetingDate}
+              : 'foretrukket møtedato ' + groupTo.meetingDate + '. '}
+            {(groupTo.meetingFrequency ?? '') !== ''
+              ? groupTo.meetingFrequency + '.'
+              : ''}
           </Typography>
         </Grid>
         {/** GROUP INFO */}
