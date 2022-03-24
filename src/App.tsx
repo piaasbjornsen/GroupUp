@@ -18,10 +18,37 @@ import {useSelector} from 'react-redux';
 import {RootState} from './redux/store';
 import {ContainedAlert} from './features/containedalert/ContainedAlert';
 import Footer from './features/footer/Footer';
+import {groups as firebaseGroups} from './service/firebase';
+import {IFirebaseDb} from './interfaces/firebase';
 
 function App() {
   const {currentUser, loading} = useContext(AuthContext);
   const currentGroup = useSelector((state: RootState) => state.currentGroup);
+
+  const setupGroupAdmins = () => {
+    // Sets group admins to groups that do not contain it
+    firebaseGroups.once('value', snapshot => {
+      const groups: IFirebaseDb['groups'] = snapshot.val();
+      Object.entries(groups).forEach(groupData => {
+        if ((groupData[1].groupAdmin ?? '') === '') {
+          // Set gruppeadmin
+          const firstMemberId = groupData[1].members.find(
+            memberId => memberId !== undefined
+          );
+          if (firstMemberId !== undefined) {
+            firebaseGroups
+              .child(groupData[0])
+              .child('groupAdmin')
+              .set(firstMemberId);
+          } else {
+            // Group has no members
+            console.log('Group ' + groupData[0] + ' has no members');
+          }
+        }
+      });
+    });
+  };
+  setupGroupAdmins();
 
   return (
     <ThemeProvider theme={theme}>
