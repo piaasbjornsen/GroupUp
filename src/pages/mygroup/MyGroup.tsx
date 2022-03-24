@@ -8,6 +8,11 @@ import {
   Paper,
   CardMedia,
   CardActions,
+  SelectChangeEvent,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import TextField from '@mui/material/TextField';
 import Autocomplete from '@mui/material/Autocomplete';
@@ -71,8 +76,16 @@ const AddToList: React.FC = () => {
   const navigate = useNavigate();
   const [groups, setGroups] = useState<IFirebaseDb['groups']>();
   const [gold, setGold] = useState<boolean>(false);
-
   const currentGroup = useSelector((state: RootState) => state.currentGroup);
+  //Select
+  const [meetingFrequency, setMeetingFrequency] = React.useState<string>('');
+  const handleChangeSelect = (e: SelectChangeEvent) => {
+    setMeetingFrequency(e.target.value);
+    setInput({
+      ...input,
+      [e.target.name]: e.target.value,
+    });
+  };
 
   useEffect(() => {
     firebaseGroups.once('value', snapshot => {
@@ -98,7 +111,7 @@ const AddToList: React.FC = () => {
             users
           ).map<IUserListItem>(userId => ({
             id: userId,
-            name: users[userId].name,
+            name: users[userId]?.name,
           }));
           setUsers(userList);
           setResetForm(!resetForm);
@@ -136,7 +149,7 @@ const AddToList: React.FC = () => {
         const likesList: ILikeListItem[] = group.likes
           .filter(
             (like: IFirebaseLike) =>
-              !like.super && !superLikesID.includes(like.id) && like.id !== ''
+              !like.super && !superLikesID?.includes(like.id) && like.id !== ''
           )
           .map((like: IFirebaseLike) => {
             return {id: like.id, group: groups[like.id]};
@@ -147,6 +160,7 @@ const AddToList: React.FC = () => {
           setGold(
             group.members.some((user: string) => users[user].gold ?? false)
           );
+          setMeetingFrequency(group.meetingFrequency);
         });
       });
     });
@@ -156,17 +170,14 @@ const AddToList: React.FC = () => {
     return <ContainedAlert severity="error" message="Ugyldig gruppe id" />;
   }
 
-  if (group === null || users === null || interests === null) {
+  if (
+    group === null ||
+    group === emptyGroupObject ||
+    users === null ||
+    interests === null ||
+    currentUser === null
+  ) {
     return <ContainedAlert severity="info" message="Laster inn..." />;
-  }
-
-  if (currentUser === null || !group.members.includes(currentUser?.uid)) {
-    return (
-      <ContainedAlert
-        severity="error"
-        message="Du må være med i gruppen for å kunne se denne siden."
-      />
-    );
   }
 
   const handleChange = (
@@ -174,7 +185,7 @@ const AddToList: React.FC = () => {
   ): void => {
     setInput({
       ...input,
-      [e.target.name]: e.target.value,
+      [e.target?.name]: e.target.value,
     });
   };
 
@@ -194,7 +205,7 @@ const AddToList: React.FC = () => {
     const likesList: ILikeListItem[] = group.likes
       .filter(
         (like: IFirebaseLike) =>
-          !like.super && !superLikesID.includes(like.id) && like.id !== ''
+          !like.super && !superLikesID?.includes(like.id) && like.id !== ''
       )
       .map((like: IFirebaseLike) => {
         return {
@@ -287,7 +298,7 @@ const AddToList: React.FC = () => {
   const handleClick = (): void => {
     // Add current user to the group
     if (
-      !input.members.includes(currentUser?.uid ?? '') &&
+      !input.members?.includes(currentUser?.uid ?? '') &&
       currentUser !== null
     ) {
       input.members.push(currentUser?.uid);
@@ -370,7 +381,7 @@ const AddToList: React.FC = () => {
             <Grid item xs={12} marginBottom={2}>
               <Typography variant="h4">Rediger gruppeprofil</Typography>
             </Grid>
-            {errorMessages.description === '' ? null : (
+            {errorMessages?.description === '' ? null : (
               <ContainedAlert message={errorMessages.description} />
             )}
             <TextField
@@ -424,7 +435,7 @@ const AddToList: React.FC = () => {
                     );
                   })}
                 options={users}
-                getOptionLabel={option => option.name}
+                getOptionLabel={option => option?.name}
                 renderInput={params => (
                   <TextField {...params} label="Medlemmer" variant="standard" />
                 )}
@@ -485,7 +496,7 @@ const AddToList: React.FC = () => {
                 }}
               />
             </Grid>
-            <Grid container marginTop={2} marginBottom={1} item xs>
+            <Grid container marginTop={2} item xs>
               {errorMessages.imageUrl === '' ? null : (
                 <ContainedAlert message={errorMessages.imageUrl} />
               )}
@@ -502,6 +513,46 @@ const AddToList: React.FC = () => {
                 defaultValue={group.imageUrl}
                 name="imageUrl"
               />
+            </Grid>
+            <Grid container marginTop={2} item xs>
+              <TextField
+                style={{width: 500}}
+                variant="standard"
+                required
+                size="small"
+                id="outlined-required"
+                type="date"
+                label="Møtedato"
+                InputLabelProps={{shrink: true}}
+                onChange={handleChange}
+                value={input.meetingDate ?? new Date(2000, 0, 1)}
+                name="meetingDate"
+              />
+            </Grid>
+            <Grid container marginTop={2} marginBottom={1} item xs>
+              <FormControl variant="standard" sx={{minWidth: 485}}>
+                <InputLabel id="demo-simple-select-filled-label">
+                  Møtefrekvens
+                </InputLabel>
+                <Select
+                  labelId="demo-simple-select-filled-label"
+                  id="demo-simple-select-filled"
+                  value={meetingFrequency}
+                  name="meetingFrequency"
+                  onChange={handleChangeSelect}
+                >
+                  <MenuItem value={'Gruppen ønsker å møtes 1 gang'}>1</MenuItem>
+                  <MenuItem value={'Gruppen ønsker å møtes 1-3 ganger'}>
+                    1-3
+                  </MenuItem>
+                  <MenuItem value={'Gruppen ønsker å møtes 3-5 ganger'}>
+                    3-5
+                  </MenuItem>
+                  <MenuItem value={'Gruppen ønsker å møtes mer enn 5 ganger'}>
+                    5+
+                  </MenuItem>
+                </Select>
+              </FormControl>
             </Grid>
             {updateSucceeded ? (
               <ContainedAlert
@@ -554,13 +605,13 @@ const AddToList: React.FC = () => {
                     >
                       <CardContent>
                         <Typography variant="h5" component="div">
-                          {likesGroup.group.name}
+                          {likesGroup.group?.name}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          {likesGroup.group.description.length > 100
-                            ? likesGroup.group.description.substring(0, 97) +
+                          {likesGroup.group?.description.length > 100
+                            ? likesGroup.group?.description.substring(0, 97) +
                               '...'
-                            : likesGroup.group.description}
+                            : likesGroup.group?.description}
                         </Typography>
                       </CardContent>
                       <CardActions>
@@ -604,13 +655,13 @@ const AddToList: React.FC = () => {
                     >
                       <CardContent>
                         <Typography variant="h5" component="div">
-                          {likesGroup.group.name}
+                          {likesGroup.group?.name}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          {likesGroup.group.description.length > 100
-                            ? likesGroup.group.description.substring(0, 97) +
+                          {likesGroup.group?.description.length > 100
+                            ? likesGroup.group?.description.substring(0, 97) +
                               '...'
-                            : likesGroup.group.description}
+                            : likesGroup.group?.description}
                         </Typography>
                       </CardContent>
                       <CardActions>
@@ -632,7 +683,7 @@ const AddToList: React.FC = () => {
             <Typography variant="h4" marginBottom={2}>
               Matchede grupper
             </Typography>
-            <Grid container item spacing={2}>
+            <Grid container item spacing={2} marginLeft={0.3}>
               {matchedGroups.length === 0 ? (
                 <Typography variant="body2" marginTop={1}>
                   Dere har ikke matchet med noen grupper..
@@ -674,7 +725,7 @@ const AddToList: React.FC = () => {
                         component="div"
                         sx={{flexGrow: 1, pb: 1}}
                       >
-                        {matchedGroup.name}
+                        {matchedGroup?.name}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Matchet {matchedGroup.date}
