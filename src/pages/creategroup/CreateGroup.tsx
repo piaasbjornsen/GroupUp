@@ -1,4 +1,13 @@
-import {Grid, Button, Typography} from '@mui/material';
+import {
+  Grid,
+  Button,
+  Typography,
+  MenuItem,
+  FormControl,
+  Select,
+  InputLabel,
+  SelectChangeEvent,
+} from '@mui/material';
 import TextField from '@mui/material/TextField';
 import Autocomplete from '@mui/material/Autocomplete';
 import React, {useContext, useEffect, useState} from 'react';
@@ -32,16 +41,23 @@ interface IUserListItem {
 const AddToList: React.FC = () => {
   const {currentUser} = useContext(AuthContext);
   const dispatch = useDispatch();
-
   const [input, setInput] = useState<IFirebaseGroup>(emptyGroupObject);
   const [interests, setInterests] = useState<IFirebaseInterest[]>([]);
   const [users, setUsers] = useState<IUserListItem[]>([]);
   const [errorMessages, setErrorMessages] =
     useState<IErrorMessages>(emptyErrorMessages);
-
   const [resetForm, setResetForm] = useState(false);
-
   const navigate = useNavigate();
+  //Select
+  const [meetingTime, setMeetingTime] = React.useState<string>('');
+
+  const handleChangeSelect = (e: SelectChangeEvent) => {
+    setMeetingTime(e.target.value);
+    setInput({
+      ...input,
+      [e.target.name]: e.target.value,
+    });
+  };
 
   useEffect(() => {
     firebaseUsers.once('value', snapshot => {
@@ -231,9 +247,24 @@ const AddToList: React.FC = () => {
               )}
             />
           </Grid>
+          <Grid container item justifyContent="center" marginTop={2}>
+            <TextField
+              style={{width: 500}}
+              variant="standard"
+              required
+              size="small"
+              id="outlined-required"
+              type="date"
+              label="Møtedato"
+              InputLabelProps={{shrink: true}}
+              onChange={handleChange}
+              value={input.meetingDate ?? new Date(2000, 0, 1)}
+              name="meetingDate"
+            />
+          </Grid>
         </Grid>
         <Grid container item flexDirection={'column'} width={1 / 2}>
-          <Grid container item justifyContent="center" marginTop={2}>
+          <Grid container item justifyContent="center" marginTop={1.77}>
             {errorMessages.location === '' ? null : (
               <ContainedAlert message={errorMessages.location} />
             )}
@@ -277,6 +308,37 @@ const AddToList: React.FC = () => {
               size="small"
               name="imageUrl"
             />
+          </Grid>
+          <Grid
+            container
+            item
+            justifyContent="center"
+            marginTop={1}
+            marginBottom={1}
+          >
+            <FormControl variant="standard" sx={{minWidth: 510}}>
+              <InputLabel id="demo-simple-select-filled-label">
+                Møtefrekvens
+              </InputLabel>
+              <Select
+                labelId="demo-simple-select-filled-label"
+                id="demo-simple-select-filled"
+                value={meetingTime}
+                name="meetingFrequency"
+                onChange={handleChangeSelect}
+              >
+                <MenuItem value={'Gruppen ønsker å møtes 1 gang'}>1</MenuItem>
+                <MenuItem value={'Gruppen ønsker å møtes 1-3 ganger'}>
+                  1-3
+                </MenuItem>
+                <MenuItem value={'Gruppen ønsker å møtes 3-5 ganger'}>
+                  3-5
+                </MenuItem>
+                <MenuItem value={'Gruppen ønsker å møtes mer enn 5 ganger'}>
+                  5+
+                </MenuItem>
+              </Select>
+            </FormControl>
           </Grid>
         </Grid>
         <Grid container item justifyContent="center" marginTop={5}>
