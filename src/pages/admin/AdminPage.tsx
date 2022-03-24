@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import {Grid, Box} from '@mui/material';
+import {Grid, Box, Button} from '@mui/material';
 import {IFirebaseDb} from '../../interfaces/firebase';
 import {
   groups as firebaseGroups,
@@ -23,6 +23,99 @@ export default function AdminPage() {
     });
   }, []);
 
+  const handleClickGroupDelete = (groupId: string): void => {
+    // removing all references to group in other group objects (likes and matches)
+    Object.entries(groupList).forEach(groupData => {
+      if (groupData[1].matches?.length > 0) {
+        Object.entries(groupData[1]?.matches).forEach(match => {
+          if (match[1].id === groupId) {
+            firebaseGroups
+              .child(groupData[0])
+              .child('matches')
+              .child(match[0])
+              .remove();
+          }
+        });
+      }
+      if (groupData[1].likes?.length > 0) {
+        console.log('1');
+        Object.entries(groupData[1]?.likes).forEach(like => {
+          if (like[1].id === groupId) {
+            console.log('2');
+            firebaseGroups
+              .child(groupData[0])
+              .child('likes')
+              .child(like[0])
+              .remove();
+          }
+        });
+      }
+    });
+
+    // Removing group
+    firebaseGroups.child(groupId).remove();
+    // Updating state once group is gone
+    firebaseGroups.once('value', snapshot => {
+      // Fetch groups
+      const groups: IFirebaseDb['groups'] = snapshot.val();
+      setGroupList(groups);
+    });
+  };
+
+  const removeUserFromAllGroups = (memberId: string): void => {
+    // NOTE: this does not update states, if called states should be updated
+    // iterating through all groups and finding key for user to be removed
+    Object.entries(groupList).forEach(groupData => {
+      let userIndex = '';
+      if (groupData[1].members?.includes(memberId)) {
+        userIndex = groupData[1].members.indexOf(memberId).toString();
+        // removing user from group in database
+        firebaseGroups
+          .child(groupData[0])
+          .child('members')
+          .child(userIndex)
+          .remove();
+      }
+    });
+  };
+
+  const handleClickUserRemove = (memberId: string, groupId: string): void => {
+    // finding key of user in members list
+    let userIndex = '';
+    Object.entries(groupList).forEach(groupData => {
+      if (groupData[0] === groupId) {
+        userIndex = groupData[1].members.indexOf(memberId).toString();
+        // removing user from group in database
+        firebaseGroups
+          .child(groupId)
+          .child('members')
+          .child(userIndex)
+          .remove();
+      }
+    });
+    // Updating state once user is out of group
+    firebaseGroups.once('value', snapshot => {
+      const groups: IFirebaseDb['groups'] = snapshot.val();
+      setGroupList(groups);
+    });
+  };
+
+  const handleClickUserDelete = (memberId: string): void => {
+    // Removing user from all groups
+    removeUserFromAllGroups(memberId);
+    // Deleting from platform
+    firebaseUsers.child(memberId).remove();
+    // Updating state once user is gone
+    firebaseUsers.once('value', snapshot => {
+      const users: IFirebaseDb['users'] = snapshot.val();
+      setUserList(users);
+    });
+    firebaseGroups.once('value', snapshot => {
+      const groups: IFirebaseDb['groups'] = snapshot.val();
+      setGroupList(groups);
+    });
+  };
+
   return (
     <Grid
       container
@@ -45,6 +138,9 @@ export default function AdminPage() {
             <Box
               sx={{bgcolor: '#96AB94', m: '2em', p: '1em', borderRadius: '5%'}}
             >
+              <Button onClick={() => handleClickGroupDelete(groupItemArray[0])}>
+                Slett gruppe
+              </Button>
               <p style={{fontWeight: 'bold', fontSize: '1.2em'}}>
                 {groupItemArray[1].name}
               </p>
@@ -52,9 +148,21 @@ export default function AdminPage() {
               <p>Interesser: {groupItemArray[1].interests?.join(', ')}</p>
               <p>Medlemmer:</p>
               {groupItemArray[1].members?.map(memberId => (
-                <p style={{marginTop: '-0.5em'}} key={memberId}>
-                  {userList[memberId]?.name}
-                </p>
+                <div key={memberId}>
+                  <p style={{marginTop: '-0.5em'}}>
+                    {userList[memberId]?.name}
+                  </p>
+                  <Button onClick={() => handleClickUserDelete(memberId)}>
+                    plattform
+                  </Button>
+                  <Button
+                    onClick={() =>
+                      handleClickUserRemove(memberId, groupItemArray[0])
+                    }
+                  >
+                    gruppe
+                  </Button>
+                </div>
               ))}
             </Box>
           </Grid>
