@@ -160,45 +160,6 @@ const AddToList: React.FC = () => {
     return <ContainedAlert severity="info" message="Laster inn..." />;
   }
 
-  if (!group.members?.includes(currentUser?.uid ?? '')) {
-    return (
-      <>
-        <>
-          <CssBaseline />
-          <Grid container justifyContent="center" marginTop={5}>
-            {' '}
-            {/* Overskriften på siden, hentet fra react */}
-            <Typography variant="h4" marginLeft={2}>
-              {group?.name}
-            </Typography>
-          </Grid>
-        </>
-        <Grid container justifyContent="center" marginTop={5}>
-          {' '}
-          {/* Beskrivelsen */}
-          <Typography variant="body1" style={{width: 500}}>
-            {group?.description}
-          </Typography>
-        </Grid>
-        <Grid container justifyContent="center" marginTop={5}>
-          <Typography variant="body1" style={{width: 500}}>
-            {group?.members
-              .map(
-                (userId: IFirebaseUserId) =>
-                  users.find(user => user.id === userId)?.name
-              )
-              .join(', ')}
-          </Typography>
-        </Grid>
-        <Grid container justifyContent="center" marginTop={5}>
-          <Typography variant="body1" style={{width: 500}}>
-            {group?.interests.join(', ')}
-          </Typography>
-        </Grid>
-      </>
-    );
-  }
-
   if (currentUser === null || !group.members.includes(currentUser?.uid)) {
     return (
       <ContainedAlert

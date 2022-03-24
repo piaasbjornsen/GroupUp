@@ -5,6 +5,7 @@ export const emptyGroupObject: IFirebaseGroup = {
   description: '',
   interests: [],
   members: [],
+  groupAdmin: '',
   location: '',
   imageUrl: '',
   likes: [],

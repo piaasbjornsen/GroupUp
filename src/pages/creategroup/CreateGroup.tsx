@@ -76,6 +76,8 @@ const AddToList: React.FC = () => {
       console.log('Added user to group');
     }
 
+    input.groupAdmin = currentUser?.uid ?? '';
+
     const updatedErrorMessages = validateGroupData(input);
 
     if (groupHasErrorMessages(updatedErrorMessages)) {
