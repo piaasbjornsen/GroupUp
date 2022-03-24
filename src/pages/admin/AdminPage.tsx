@@ -24,6 +24,34 @@ export default function AdminPage() {
   }, []);
 
   const handleClickGroupDelete = (groupId: string): void => {
+    // removing all references to group in other group objects (likes and matches)
+    Object.entries(groupList).forEach(groupData => {
+      if (groupData[1].matches?.length > 0) {
+        Object.entries(groupData[1]?.matches).forEach(match => {
+          if (match[1].id === groupId) {
+            firebaseGroups
+              .child(groupData[0])
+              .child('matches')
+              .child(match[0])
+              .remove();
+          }
+        });
+      }
+      if (groupData[1].likes?.length > 0) {
+        console.log('1');
+        Object.entries(groupData[1]?.likes).forEach(like => {
+          if (like[1].id === groupId) {
+            console.log('2');
+            firebaseGroups
+              .child(groupData[0])
+              .child('likes')
+              .child(like[0])
+              .remove();
+          }
+        });
+      }
+    });
+
     // Removing group
     firebaseGroups.child(groupId).remove();
     // Updating state once group is gone
@@ -36,11 +64,10 @@ export default function AdminPage() {
 
   const removeUserFromAllGroups = (memberId: string): void => {
     // NOTE: this does not update states, if called states should be updated
+    // iterating through all groups and finding key for user to be removed
     Object.entries(groupList).forEach(groupData => {
       let userIndex = '';
-      console.log('no');
       if (groupData[1].members?.includes(memberId)) {
-        console.log('yes');
         userIndex = groupData[1].members.indexOf(memberId).toString();
         // removing user from group in database
         firebaseGroups

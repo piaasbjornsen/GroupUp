@@ -52,7 +52,7 @@ export default function MyGroups() {
       >
         {Object.keys(groupList)
           .filter(groupKey =>
-            groupList[groupKey].members.includes(currentUser.uid)
+            groupList[groupKey].members?.includes(currentUser.uid)
           )
           .map(groupKey => (
             <Grid item key={groupKey} xs sx={{minHeight: '100%'}}>
