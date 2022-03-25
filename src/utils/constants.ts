@@ -11,6 +11,7 @@ export const emptyGroupObject: IFirebaseGroup = {
   likes: [],
   matches: [],
   meetingDate: '',
+  meetingFrequency: '',
 };
 
 export const emptyUserObject: IFirebaseUser = {

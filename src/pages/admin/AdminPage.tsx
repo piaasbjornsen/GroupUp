@@ -1,6 +1,11 @@
 import React, {useState, useEffect} from 'react';
-import {Grid, Box, Button} from '@mui/material';
+import {Grid, Box, Button, Fab, Typography, Stack} from '@mui/material';
 import {IFirebaseDb} from '../../interfaces/firebase';
+import PriorityHighIcon from '@mui/icons-material/PriorityHigh';
+import Popper from '@mui/material/Popper';
+import PopupState, {bindToggle, bindPopper} from 'material-ui-popup-state';
+import Fade from '@mui/material/Fade';
+import Paper from '@mui/material/Paper';
 import {
   groups as firebaseGroups,
   users as firebaseUsers,
@@ -146,24 +151,80 @@ export default function AdminPage() {
               </p>
               <p>Beskrivelse: {groupItemArray[1].description}</p>
               <p>Interesser: {groupItemArray[1].interests?.join(', ')}</p>
-              <p>Medlemmer:</p>
-              {groupItemArray[1].members?.map(memberId => (
-                <div key={memberId}>
-                  <p style={{marginTop: '-0.5em'}}>
-                    {userList[memberId]?.name}
-                  </p>
-                  <Button onClick={() => handleClickUserDelete(memberId)}>
-                    plattform
-                  </Button>
-                  <Button
-                    onClick={() =>
-                      handleClickUserRemove(memberId, groupItemArray[0])
-                    }
+              <Grid>
+                <p>Medlemmer:</p>
+              </Grid>
+              <Stack direction="column" spacing={2}>
+                {groupItemArray[1].members?.map(memberId => (
+                  <Grid
+                    container
+                    item
+                    direction="row"
+                    key={memberId}
+                    justifyContent="center"
                   >
-                    gruppe
-                  </Button>
-                </div>
-              ))}
+                    <Typography
+                      variant="body1"
+                      style={{marginTop: '-0.5em'}}
+                      sx={{flexGrow: 1}}
+                    >
+                      {userList[memberId]?.name}
+                    </Typography>
+                    {(userList[memberId]?.reports?.length ?? 0) > 0 ? (
+                      <PopupState variant="popper" popupId="demo-popup-popper">
+                        {popupState => (
+                          <Stack direction="row" spacing={2}>
+                            <Grid>
+                              <Fab
+                                color="error"
+                                size="small"
+                                {...bindToggle(popupState)}
+                              >
+                                <PriorityHighIcon />
+                              </Fab>
+                              <Button
+                                onClick={() => handleClickUserDelete(memberId)}
+                              >
+                                plattform
+                              </Button>
+                              <Button
+                                onClick={() =>
+                                  handleClickUserRemove(
+                                    memberId,
+                                    groupItemArray[0]
+                                  )
+                                }
+                              >
+                                gruppe
+                              </Button>
+                            </Grid>
+                            <Popper {...bindPopper(popupState)} transition>
+                              {({TransitionProps}) => (
+                                <Fade {...TransitionProps} timeout={350}>
+                                  <Paper>
+                                    {userList[memberId]?.reports?.map(
+                                      //hvor skal denne?
+                                      report => (
+                                        <Typography key={report.reportedBy}>
+                                          <p>
+                                            Raportert av:{' '}
+                                            {userList[report.reportedBy].name}
+                                          </p>
+                                          <p>Begrunnelse: {report.reason}</p>
+                                        </Typography>
+                                      )
+                                    )}
+                                  </Paper>
+                                </Fade>
+                              )}
+                            </Popper>
+                          </Stack>
+                        )}
+                      </PopupState>
+                    ) : null}
+                  </Grid>
+                ))}
+              </Stack>
             </Box>
           </Grid>
         ))}
