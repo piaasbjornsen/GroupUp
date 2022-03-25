@@ -353,7 +353,7 @@ const AddToList: React.FC = () => {
           variant="h4"
           marginLeft={3}
           paddingTop={3}
-          sx={{color: 'white'}}
+          sx={{color: 'white', textShadow: '1px 1px 10px #5f5f5f'}}
         >
           {group?.name}
         </Typography>
@@ -364,8 +364,6 @@ const AddToList: React.FC = () => {
           margin: 'auto',
           width: {sx: 'default', sm: '80%'},
           flexGrow: 0,
-          backgroundColor: theme =>
-            theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
         }}
         elevation={0}
       >
@@ -524,6 +522,7 @@ const AddToList: React.FC = () => {
                 style={{width: 500}}
                 variant="standard"
                 required
+                disabled={!isGroupAdmin}
                 size="small"
                 id="outlined-required"
                 type="date"
@@ -543,6 +542,7 @@ const AddToList: React.FC = () => {
                   labelId="demo-simple-select-filled-label"
                   id="demo-simple-select-filled"
                   value={meetingFrequency}
+                  disabled={!isGroupAdmin}
                   name="meetingFrequency"
                   onChange={handleChangeSelect}
                 >
@@ -608,11 +608,12 @@ const AddToList: React.FC = () => {
                         minWidth: {sx: 'default', sm: 200},
                         cursor: 'pointer',
                       }}
-                      onClick={() => {
-                        navigate('/groups/' + likesGroup.id);
-                      }}
                     >
-                      <CardContent>
+                      <CardContent
+                        onClick={() => {
+                          navigate('/groups/' + likesGroup.id);
+                        }}
+                      >
                         <Typography variant="h5" component="div">
                           {likesGroup.group?.name}
                         </Typography>
@@ -658,11 +659,12 @@ const AddToList: React.FC = () => {
                         minWidth: {sx: 'default', sm: 200},
                         cursor: 'pointer',
                       }}
-                      onClick={() => {
-                        navigate('/groups/' + likesGroup.id);
-                      }}
                     >
-                      <CardContent>
+                      <CardContent
+                        onClick={() => {
+                          navigate('/groups/' + likesGroup.id);
+                        }}
+                      >
                         <Typography variant="h5" component="div">
                           {likesGroup.group?.name}
                         </Typography>
