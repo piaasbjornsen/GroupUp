@@ -60,7 +60,6 @@ interface ILikeListItem {
 
 const AddToList: React.FC = () => {
   const {currentUser} = useContext(AuthContext);
-
   const [input, setInput] = useState<IFirebaseGroup>(emptyGroupObject);
   const [interests, setInterests] = useState<IFirebaseInterest[]>([]);
   const [users, setUsers] = useState<IUserListItem[]>([]);
@@ -76,6 +75,8 @@ const AddToList: React.FC = () => {
   const navigate = useNavigate();
   const [groups, setGroups] = useState<IFirebaseDb['groups']>();
   const [gold, setGold] = useState<boolean>(false);
+  const [isGroupAdmin, setIsGroupAdmin] = useState<boolean>(false);
+  const userInfo = isGroupAdmin ? 'Rediger gruppeprofil' : 'Gruppeprofil';
   const currentGroup = useSelector((state: RootState) => state.currentGroup);
   //Select
   const [meetingFrequency, setMeetingFrequency] = React.useState<string>('');
@@ -92,6 +93,7 @@ const AddToList: React.FC = () => {
       const groups: IFirebaseDb['groups'] = snapshot.val();
       setGroups(groups);
       const thisGroup = groups[currentGroup.groupId ?? ''];
+      setIsGroupAdmin(thisGroup.groupAdmin === currentUser?.uid);
       if (groups[currentGroup.groupId ?? ''] ?? false) {
         setGroup(thisGroup);
         setInput(thisGroup);
@@ -303,6 +305,7 @@ const AddToList: React.FC = () => {
     ) {
       input.members.push(currentUser?.uid);
     }
+    setGroup({...group, ...input});
 
     const updatedData = {
       // Mulig vi må endre denne, da det er en bug når vi oppdaterer siden.
@@ -316,19 +319,16 @@ const AddToList: React.FC = () => {
       setErrorMessages(updatedErrorMessages);
       return;
     }
-
     // Clear error messages
     setErrorMessages(emptyErrorMessages);
-
     firebaseGroups
       .child(currentGroup.groupId ?? '')
       .update(updatedData)
       .then(() => {
         setUpdateSucceeded(true);
-        setResetForm(!resetForm);
+        console.log(group);
         setTimeout(() => {
           setUpdateSucceeded(false);
-          setResetForm(!resetForm);
         }, 2000);
       });
   };
@@ -379,7 +379,7 @@ const AddToList: React.FC = () => {
           >
             {/* VENSTRE SIDE */}
             <Grid item xs={12} marginBottom={2}>
-              <Typography variant="h4">Rediger gruppeprofil</Typography>
+              <Typography variant="h4">{userInfo}</Typography>
             </Grid>
             {errorMessages?.description === '' ? null : (
               <ContainedAlert message={errorMessages.description} />
@@ -391,6 +391,7 @@ const AddToList: React.FC = () => {
               variant="standard"
               label="Beskrivelse"
               multiline
+              disabled={!isGroupAdmin}
               rows={4}
               inputProps={{maxLength: 240}}
               onChange={handleChange}
@@ -409,6 +410,7 @@ const AddToList: React.FC = () => {
                 multiple
                 size="small"
                 freeSolo
+                disabled={!isGroupAdmin}
                 style={{width: 500}}
                 onChange={(
                   event: React.SyntheticEvent,
@@ -450,6 +452,7 @@ const AddToList: React.FC = () => {
                 id="addInterests"
                 multiple={true}
                 freeSolo
+                disabled={!isGroupAdmin}
                 style={{width: 500}}
                 size="small"
                 onChange={(event: React.SyntheticEvent, value: string[]) => {
@@ -478,6 +481,7 @@ const AddToList: React.FC = () => {
                 id="addLocation"
                 multiple={false}
                 freeSolo
+                disabled={!isGroupAdmin}
                 style={{width: 500}}
                 options={availableLocations}
                 size="small"
@@ -506,6 +510,7 @@ const AddToList: React.FC = () => {
                 id="outlined-multiline-static"
                 label="Gruppebilde"
                 rows={4}
+                disabled={!isGroupAdmin}
                 inputProps={{maxLength: 240}}
                 onChange={handleChange}
                 size="small"
@@ -566,9 +571,13 @@ const AddToList: React.FC = () => {
               marginBottom={5}
               justifyContent="center"
             >
-              <Button variant="outlined" onClick={handleClick}>
-                OPPDATER GRUPPE
-              </Button>
+              {isGroupAdmin ? (
+                <Button variant="outlined" onClick={handleClick}>
+                  OPPDATER GRUPPE
+                </Button>
+              ) : (
+                <></>
+              )}
             </Grid>
           </Grid>
           <Grid
