@@ -1,5 +1,15 @@
 import React, {useState, useEffect} from 'react';
-import {Grid, Box, Button, Fab, Typography, Stack} from '@mui/material';
+import {
+  Grid,
+  Button,
+  CardContent,
+  Card,
+  CardMedia,
+  Fab,
+  Typography,
+  Stack,
+  CardActions,
+} from '@mui/material';
 import {IFirebaseDb} from '../../interfaces/firebase';
 import PriorityHighIcon from '@mui/icons-material/PriorityHigh';
 import Popper from '@mui/material/Popper';
@@ -10,6 +20,7 @@ import {
   groups as firebaseGroups,
   users as firebaseUsers,
 } from '../../service/firebase';
+import {defaultGroupImageUrl} from '../../utils/constants';
 
 export default function AdminPage() {
   const [groupList, setGroupList] = useState<IFirebaseDb['groups']>({});
@@ -136,96 +147,142 @@ export default function AdminPage() {
         justifyContent="space-around"
         flexWrap="wrap"
         width="80%"
-        margin="0 auto"
+        margin="auto"
       >
         {Object.entries(groupList).map(groupItemArray => (
-          <Grid key={groupItemArray[0]} sx={{maxWidth: 400}}>
-            <Box
-              sx={{bgcolor: '#96AB94', m: '2em', p: '1em', borderRadius: '5%'}}
+          <Grid key={groupItemArray[0]} sx={{maxWidth: 400}} marginBottom={5}>
+            <Card
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                maxWidth: 260,
+                minWidth: {sx: 'default', sm: 300},
+                minHeight: '100%',
+              }}
             >
-              <Button onClick={() => handleClickGroupDelete(groupItemArray[0])}>
-                Slett gruppe
-              </Button>
-              <p style={{fontWeight: 'bold', fontSize: '1.2em'}}>
-                {groupItemArray[1].name}
-              </p>
-              <p>Beskrivelse: {groupItemArray[1].description}</p>
-              <p>Interesser: {groupItemArray[1].interests?.join(', ')}</p>
-              <Grid>
-                <p>Medlemmer:</p>
-              </Grid>
-              <Stack direction="column" spacing={2}>
+              <CardMedia
+                component="img"
+                height="160"
+                image={groupItemArray[1].imageUrl ?? defaultGroupImageUrl}
+                alt="Gruppebilde"
+              />
+              <CardContent
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  flexGrow: 1,
+                }}
+              >
+                <Typography variant="h6" sx={{fontWeight: 'bold'}}>
+                  {groupItemArray[1].name}
+                </Typography>
+                <Typography variant="body1" marginBottom={1}>
+                  {groupItemArray[1].description}
+                </Typography>
+                <Typography variant="body1" marginBottom={1}>
+                  Interesser: {groupItemArray[1].interests?.join(', ')}
+                </Typography>
+                <Typography
+                  variant="body1"
+                  marginBottom={1}
+                  sx={{fontWeight: 'bold'}}
+                >
+                  Medlemmer
+                </Typography>
                 {groupItemArray[1].members?.map(memberId => (
                   <Grid
                     container
                     item
-                    direction="row"
+                    direction="column"
                     key={memberId}
                     justifyContent="center"
+                    marginBottom={2}
                   >
-                    <Typography
-                      variant="body1"
-                      style={{marginTop: '-0.5em'}}
-                      sx={{flexGrow: 1}}
-                    >
-                      {userList[memberId]?.name}
-                    </Typography>
-                    {(userList[memberId]?.reports?.length ?? 0) > 0 ? (
-                      <PopupState variant="popper" popupId="demo-popup-popper">
-                        {popupState => (
-                          <Stack direction="row" spacing={2}>
-                            <Grid>
-                              <Fab
-                                color="error"
-                                size="small"
-                                {...bindToggle(popupState)}
-                              >
-                                <PriorityHighIcon />
-                              </Fab>
-                              <Button
-                                onClick={() => handleClickUserDelete(memberId)}
-                              >
-                                plattform
-                              </Button>
-                              <Button
-                                onClick={() =>
-                                  handleClickUserRemove(
-                                    memberId,
-                                    groupItemArray[0]
-                                  )
-                                }
-                              >
-                                gruppe
-                              </Button>
-                            </Grid>
-                            <Popper {...bindPopper(popupState)} transition>
-                              {({TransitionProps}) => (
-                                <Fade {...TransitionProps} timeout={350}>
-                                  <Paper>
-                                    {userList[memberId]?.reports?.map(
-                                      //hvor skal denne?
-                                      report => (
-                                        <Typography key={report.reportedBy}>
-                                          <p>
-                                            Raportert av:{' '}
-                                            {userList[report.reportedBy].name}
-                                          </p>
-                                          <p>Begrunnelse: {report.reason}</p>
-                                        </Typography>
-                                      )
-                                    )}
-                                  </Paper>
-                                </Fade>
-                              )}
-                            </Popper>
-                          </Stack>
-                        )}
-                      </PopupState>
-                    ) : null}
+                    <Grid container item direction="row" alignItems="center">
+                      <Typography
+                        variant="body1"
+                        style={{marginTop: '-0.5em'}}
+                        sx={{flexGrow: 1}}
+                      >
+                        {userList[memberId]?.name}
+                      </Typography>
+                      {(userList[memberId]?.reports?.length ?? 0) > 0 ? (
+                        <PopupState
+                          variant="popper"
+                          popupId="demo-popup-popper"
+                        >
+                          {popupState => (
+                            <Stack direction="row" spacing={2}>
+                              <Grid>
+                                <Fab
+                                  color="error"
+                                  size="small"
+                                  {...bindToggle(popupState)}
+                                >
+                                  <PriorityHighIcon />
+                                </Fab>
+                              </Grid>
+                              <Popper {...bindPopper(popupState)} transition>
+                                {({TransitionProps}) => (
+                                  <Fade {...TransitionProps} timeout={350}>
+                                    <Paper>
+                                      {userList[memberId]?.reports?.map(
+                                        //hvor skal denne?
+                                        report => (
+                                          <Typography
+                                            key={report.reportedBy}
+                                            margin={1}
+                                          >
+                                            <p>
+                                              Raportert av:{' '}
+                                              {userList[report.reportedBy].name}
+                                              <br />
+                                              Begrunnelse: {report.reason}
+                                            </p>
+                                          </Typography>
+                                        )
+                                      )}
+                                    </Paper>
+                                  </Fade>
+                                )}
+                              </Popper>
+                            </Stack>
+                          )}
+                        </PopupState>
+                      ) : null}
+                    </Grid>
+                    <Grid container item direction="row" alignItems="center">
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        sx={{marginBottom: 0.5}}
+                        onClick={() => handleClickUserDelete(memberId)}
+                      >
+                        Slett fra plattform
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        sx={{marginBottom: 0.5}}
+                        onClick={() =>
+                          handleClickUserRemove(memberId, groupItemArray[0])
+                        }
+                      >
+                        Fjern fra gruppe
+                      </Button>
+                    </Grid>
                   </Grid>
                 ))}
-              </Stack>
-            </Box>
+              </CardContent>
+              <CardActions>
+                <Button
+                  variant="outlined"
+                  onClick={() => handleClickGroupDelete(groupItemArray[0])}
+                >
+                  Slett gruppe
+                </Button>
+              </CardActions>
+            </Card>
           </Grid>
         ))}
       </Grid>
