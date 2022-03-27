@@ -26,7 +26,7 @@ export default function Login() {
           Velkommen til GroupUp!
         </Typography>
         <Button
-          variant="outlined"
+          variant="contained"
           sx={{mt: 1}}
           onClick={signInWithGoogle}
           size="large"
