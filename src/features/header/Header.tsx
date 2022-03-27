@@ -133,6 +133,7 @@ export default function Header() {
         >
           <MenuItem
             onClick={() => {
+              handleClose();
               navigate('/');
             }}
           >
@@ -144,6 +145,7 @@ export default function Header() {
 
           <MenuItem
             onClick={() => {
+              handleClose();
               navigate('/groups/change');
             }}
           >

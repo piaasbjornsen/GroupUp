@@ -8,9 +8,12 @@ import {useDispatch, useSelector} from 'react-redux';
 import {RootState} from '../../redux/store';
 import {setCurrentGroup} from '../../redux/currentGroupSlice';
 import {ContainedAlert} from '../../features/containedalert/ContainedAlert';
+import {useNavigate} from 'react-router-dom';
+import CreateGroup from '../creategroup/CreateGroup';
 
 export default function MyGroups() {
   const {currentUser} = useContext(AuthContext);
+  const navigate = useNavigate();
 
   const currentGroup = useSelector((state: RootState) => state.currentGroup);
   const dispatch = useDispatch();
@@ -27,6 +30,19 @@ export default function MyGroups() {
 
   if (currentUser?.uid === undefined) {
     return <ContainedAlert severity="info" message="Laster inn bruker..." />;
+  }
+
+  if (
+    Object.keys(groupList).filter(groupKey =>
+      groupList[groupKey].members?.includes(currentUser.uid)
+    ).length === 0
+  ) {
+    // The user is member of no groups
+    return (
+      <>
+        <CreateGroup />
+      </>
+    );
   }
 
   return (
@@ -70,6 +86,7 @@ export default function MyGroups() {
                       group: groupList[groupKey],
                     })
                   );
+                  navigate('/');
                 }}
                 style={{
                   border:

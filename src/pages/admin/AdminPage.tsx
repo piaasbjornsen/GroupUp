@@ -84,6 +84,17 @@ export default function AdminPage() {
     Object.entries(groupList).forEach(groupData => {
       let userIndex = '';
       if (groupData[1].members?.includes(memberId)) {
+        if (groupData[1].members.length === 1) {
+          // Delete the group if the last user was deleted
+          handleClickGroupDelete(groupData[0]);
+        }
+        if (groupData[1].groupAdmin === memberId) {
+          // Update group admin if removed
+          firebaseGroups
+            .child(groupData[0])
+            .child('groupAdmin')
+            .set(groupData[1].members.filter(memId => memId !== memberId)[0]);
+        }
         userIndex = groupData[1].members.indexOf(memberId).toString();
         // removing user from group in database
         firebaseGroups
@@ -98,9 +109,23 @@ export default function AdminPage() {
   const handleClickUserRemove = (memberId: string, groupId: string): void => {
     // finding key of user in members list
     let userIndex = '';
+    console.log(groupList[groupId].members.length);
+    if (groupList[groupId].members.length === 1) {
+      handleClickGroupDelete(groupId);
+      return;
+    }
+    if (groupList[groupId].groupAdmin === memberId) {
+      // Update group admin if removed
+      firebaseGroups
+        .child(groupId)
+        .child('groupAdmin')
+        .set(groupList[groupId].members.filter(memId => memId !== memberId)[0]);
+    }
     Object.entries(groupList).forEach(groupData => {
       if (groupData[0] === groupId) {
-        userIndex = groupData[1].members.indexOf(memberId).toString();
+        userIndex = Object.entries(groupData[1].members)
+          .filter(memberData => memberData[1] === memberId)
+          .map(memberData => memberData[0])[0];
         // removing user from group in database
         firebaseGroups
           .child(groupId)
@@ -189,7 +214,7 @@ export default function AdminPage() {
                 >
                   Medlemmer
                 </Typography>
-                {groupItemArray[1].members?.map(memberId => (
+                {Object.values(groupItemArray[1].members)?.map(memberId => (
                   <Grid
                     container
                     item
@@ -256,19 +281,19 @@ export default function AdminPage() {
                         variant="outlined"
                         size="small"
                         sx={{marginBottom: 0.5}}
-                        onClick={() => handleClickUserDelete(memberId)}
-                      >
-                        Slett fra plattform
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        sx={{marginBottom: 0.5}}
                         onClick={() =>
                           handleClickUserRemove(memberId, groupItemArray[0])
                         }
                       >
                         Fjern fra gruppe
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        sx={{marginBottom: 0.5}}
+                        onClick={() => handleClickUserDelete(memberId)}
+                      >
+                        Slett fra plattform
                       </Button>
                     </Grid>
                   </Grid>

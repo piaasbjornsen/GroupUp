@@ -270,7 +270,7 @@ export default function groupPage() {
           variant="h4"
           marginLeft={3}
           paddingTop={3}
-          sx={{color: 'white'}}
+          sx={{color: 'white', textShadow: '1px 1px 10px #5f5f5f'}}
         >
           {groupTo?.name}
         </Typography>
