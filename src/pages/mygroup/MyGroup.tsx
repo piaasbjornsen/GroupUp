@@ -50,6 +50,7 @@ import {RootState} from '../../redux/store';
 interface IUserListItem {
   id: IFirebaseUserId;
   name: IFirebaseUserName;
+  email: string | null;
 }
 
 interface IMatchListItem extends IFirebaseGroup, IFirebaseMatch {}
@@ -114,6 +115,7 @@ const AddToList: React.FC = () => {
           ).map<IUserListItem>(userId => ({
             id: userId,
             name: users[userId]?.name,
+            email: users[userId]?.email,
           }));
           setUsers(userList);
           setResetForm(!resetForm);
@@ -431,11 +433,14 @@ const AddToList: React.FC = () => {
                       users.find(userItem => userItem.id === userId) ?? {
                         id: '',
                         name: 'Ugyldig bruker',
+                        email: '',
                       }
                     );
                   })}
                 options={users}
-                getOptionLabel={option => option?.name}
+                getOptionLabel={option =>
+                  option?.name + ' (' + option?.email + ')'
+                }
                 renderInput={params => (
                   <TextField {...params} label="Medlemmer" variant="standard" />
                 )}

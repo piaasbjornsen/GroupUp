@@ -39,7 +39,7 @@ export default function Header() {
         display="flex"
         alignItems={'center'}
         justifyContent="right"
-        style={{height: '60px'}}
+        style={{height: '60px', backgroundColor: 'rgb(250 176 150)'}}
         container
         spacing={0}
       >
