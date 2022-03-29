@@ -33,6 +33,7 @@ import ReportIcon from '@mui/icons-material/Report';
 interface IUserListItem {
   id: IFirebaseUserId;
   name: IFirebaseUserName;
+  email: string | null;
 }
 
 export default function groupPage() {
@@ -148,6 +149,7 @@ export default function groupPage() {
         userId => ({
           id: userId,
           name: users[userId].name,
+          email: users[userId].email,
         })
       );
       setUsers(userList);
@@ -282,10 +284,10 @@ export default function groupPage() {
         sx={{width: '80%', margin: '0 auto'}}
       >
         {/** LIKE / SUPERLIKE */}
-        {groupFrom.likes?.filter(
+        {(groupFrom.likes?.filter(
           like =>
             like.id === groupIdTo && (gold === true || like.super === true)
-        ).length === 0 ? (
+        ).length ?? 0) === 0 ? (
           <Grid
             container
             item
@@ -462,6 +464,7 @@ export default function groupPage() {
                         users.find(user => user.id === userId) ?? {
                           id: '',
                           name: '',
+                          email: '',
                         }
                     )
                     .filter((user: IUserListItem) => user.id !== '')
@@ -478,7 +481,7 @@ export default function groupPage() {
                         marginBottom={1.5}
                       >
                         <Typography sx={{width: 1, textAlign: 'center'}}>
-                          {user.name}
+                          {user.name} ({user.email})
                         </Typography>
                         <Grid marginTop={0.5}>
                           {users2[user.id].reports?.some(

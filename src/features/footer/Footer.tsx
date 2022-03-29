@@ -10,16 +10,20 @@ export default function Footer() {
         justifyContent="center"
         alignItems="center"
         height="fit-content"
-        sx={{py: 1}}
+        sx={{py: 1, backgroundColor: '#a3a3a3'}}
       >
         <Grid
           container
           item
-          direction="column"
+          direction="row"
           width={1 / 2}
           alignItems="center"
+          justifyContent="center"
         >
-          <Typography variant="body2">GroupUp © Gruppe 34</Typography>
+          <img src="/assets/groupup_logo_black.png" style={{height: '40px'}} />
+          <Typography variant="body2" marginLeft={1}>
+            © Gruppe 34
+          </Typography>
         </Grid>
         <Grid
           container

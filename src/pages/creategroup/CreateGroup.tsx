@@ -36,6 +36,7 @@ import {useDispatch} from 'react-redux';
 interface IUserListItem {
   id: IFirebaseUserId;
   name: IFirebaseUserName;
+  email: string | null;
 }
 
 const AddToList: React.FC = () => {
@@ -63,7 +64,11 @@ const AddToList: React.FC = () => {
     firebaseUsers.once('value', snapshot => {
       const users: IFirebaseDb['users'] = snapshot.val();
       const userList: IUserListItem[] = Object.keys(users).map<IUserListItem>(
-        userId => ({id: userId, name: users[userId].name})
+        userId => ({
+          id: userId,
+          name: users[userId].name,
+          email: users[userId].email,
+        })
       );
       setUsers(userList);
     });
@@ -210,7 +215,7 @@ const AddToList: React.FC = () => {
                 });
               }}
               options={users}
-              getOptionLabel={option => option.name}
+              getOptionLabel={option => option.name + ' (' + option.email + ')'}
               renderInput={params => (
                 <TextField
                   {...params}
